@@ -1,0 +1,6 @@
+CC(CN)O~1-Aminopropan-2-ol
+C1=CC(=CN=C1)C#N~3-Cyanopyridine
+C(CC(=O)O)CN~Gamma-Aminobutyric Acid
+C(CCN)CC(=O)O~5-Aminovaleric acid
+CC(=O)N~Acetamide
+C1=NC2=NC=NC(=C2N1)N~Adenine
