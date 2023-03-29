@@ -1,5 +1,6 @@
 
 save_spectrum_to_file = function (spec, filepath) {
+	'use strict';
 	if ( spec == undefined || !spec.isValid() ) { return; }
 	var file = new File(filepath);
 	var mapObj = {},
@@ -9,7 +10,7 @@ save_spectrum_to_file = function (spec, filepath) {
 	
 	if (file.open(File.WriteOnly)) {
 		strm = new TextStream(file);	
-			
+		
 		hz = spec.hz() + spec.scaleWidth();
 		dHz = -spec.scaleWidth() / spec.count();
 		pt = 0;
@@ -18,31 +19,28 @@ save_spectrum_to_file = function (spec, filepath) {
 		
 		ppm = hz / spec.frequency();
 		dPpm = dHz / spec.frequency();			
-		var ticker = 0; // Skip every 5 points to reduce file size...
 		while ( pt !== endPt ) {
-			//if ( ticker < 5 ) {	 ticker++; }
-			//else {
-				ticker = 0;
-				mapObj.hz = hz.toFixed(aDecimals);
-				mapObj.ppm = ppm.toFixed(aDecimals);
-				mapObj.pts = pt;
-				mapObj.real = spec.real(pt).toFixed(aDecimals);				
-				//mapObj.imag = spec.imag(pt).toFixed(aDecimals);
-				// Compression: Don't write 0s. This hugely reduces file size and running time.
-				if ( mapObj.real != 0 ) {
-					strm.writeln(aFormat.formatMap(mapObj));					
-				}
-			//}
+			ticker = 0;
+			mapObj.hz = hz.toFixed(aDecimals);
+			mapObj.ppm = ppm.toFixed(aDecimals);
+			mapObj.pts = pt;
+			mapObj.real = spec.real(pt).toFixed(aDecimals);				
+			//mapObj.imag = spec.imag(pt).toFixed(aDecimals);
+			// Compression: Don't write 0s. This hugely reduces file size and running time.
+			if ( mapObj.real != 0 ) {
+				strm.writeln(aFormat.formatMap(mapObj));					
+			}
 			hz += dHz;
 			ppm += dPpm;
-			pt += dPt;					
+			pt += dPt;
 		}
 		file.close();
 		print("Saved to " + filepath);
 	} else { print("Problem writing to " + filepath); }		
 };
 
-make_predictions = function (mol) {	
+make_predictions = function (mol) {
+	'use strict';
 	if ( mol == undefined || !mol.isValid() ) { return; }
 	//print(mol.generateSMILES());
 	
@@ -73,7 +71,9 @@ make_predictions = function (mol) {
 	if ( spec_13C != undefined ) { save_spectrum_to_file(spec_13C,MOL_13C_DIR + mol.molName + ".csv"); }
 };
 
+// Make a prediction for some .mol file and save those predictions to file.
 predict_for_file = function (filepath) {
+	'use strict';
 	var name;
 	// Remove the filepath and only keep the filename.
 	var filearr;
@@ -94,29 +94,72 @@ predict_for_file = function (filepath) {
 	// This has opened this molecule "page" on the new document.
 	//   Try to find the molecule object on the page.
 	for ( var i = 0; i < aDocument.itemCount() ; i++ ) {
-		// Make a copy of the object and see if it works as a molecule.
-		var molecule = new Molecule(aDocument.item(i));
-		if ( !molecule.isValid() ) { continue; } // This isn't actually a molecule, try other objects.
+		// Make a copy of the object and see if it works as a molecule.		
+		var mol = new Molecule(aDocument.item(i));
+		if ( !mol.isValid() ) { continue; } // This isn't actually a molecule, try other objects.
 		// Note: This method works if we have multiple molecules in the document,
 		//   except we would need to name them different things.
-		molecule.molName = name; // Store the name in a molecule field.
+		mol.molName = name; // Store the name in a molecule field.
 		// Make the predictions and store them to file.
-		make_predictions(molecule);
+		make_predictions(mol);
 	}
 	aDocument.destroy(); // Delete that document so we don't accumulate tabs.
 };
 
-batch_prediction = function(directory) {
+// Make a prediction for a SMILES string of some name and save those predictions to file.
+predict_for_smiles = function(smiles, name) {
+	'use strict';
+	name = name.replace(" ","_"); // Avoid spaces in filenames so make the name not have spaces.
+	// Make a new blank document.
+	var aDocument = new Document();
+	Application.mainWindow.addDocument(aDocument);
+	// Add the SMILES molecule.
+	molecule.importSMILES(smiles);
+	for ( var i = 0 ; i < aDocument.itemCount() ; i++ ) {
+		// Look for the molecule in the document. Is this item the molecule we just made?
+		var mol = new Molecule(aDocument.item(i));
+		if ( !mol.isValid() ) { continue; } // Not a molecule. Try again.
+		mol.molName = name;
+		make_predictions(mol);
+	}
+	aDocument.destroy(); // Delete that document so we don't accumulate tabs.
+};
+
+// Iterate through .mol files in a directory and make predictions for each.
+batch_prediction_mol = function(directory) {
+	'use strict';
 	print("Batch predicting in " + directory);
 	// Iterate through .mol files in this directory and generate spectra for them.
 	var dir = Dir(directory); // This object lets us traverse the directory.
 	var entries = dir.entryList("*.mol",Dir.Files); // Array of valid file names.	
 	for ( var i = 0 ; i < entries.length ; i++ ) {
-		print(i + ": " + entries[i]);	
+		print("Predicting for " + entries[i]);
 		predict_for_file(directory + "/" + entries[i]);
 	}
 	print("Done!");
 };
 
-//batch_prediction(MOL_IN_DIR);
+// Iterate through SMILES~Name pairs in a text file and generate predictions for each.
+batch_prediction_smiles = function(filepath) {
+	'use strict';
+	print("Batch predicting using " + filepath);
+	var file = new File(filepath);
+	if ( file == undefined ) { print("Problem opening " + filepath); return; }
+	if ( !file.open(File.ReadOnly) ) { print("Problem opening " + filepath); return; }
+	var strm = new TextStream(file);
+	var line = strm.readLine();
+	var arr;
+	do {
+		arr = line.split("~"); // This is the delimiter used in the text file to separate SMILES and name.
+		predict_for_smiles(arr[0],arr[1]);
+		print("Predicting for " + arr[1]);
+		line = strm.readLine();
+	} while ( line != "" );
+	file.close();
+	print("Done!");
+};
 
+//batch_prediction_smiles(SMILES_FILE);
+
+//batch_prediction(MOL_IN_DIR);
+//molecule.importSMILES("cc");
