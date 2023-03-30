@@ -167,11 +167,55 @@ if __name__ == "__main__":
     X_val = X_train[int(0.7 * len(X_train)):]
     y_train_final = y_train[:int(0.7 * len(y_train))]
     y_val = y_train[int(0.7 * len(y_train)):]
-    # creating the neural network
-    nn = MLP(4, 10, 3, 0.01, 1000)
-    # training the neural network
-    nn.train(X_train_final, y_train_final)
-    # calculating the accuracy on the validation set
-    print("Validation Accuracy: ", nn.accuracy(X_val, y_val))
-    # calculating the accuracy on the testing set
-    print("Testing Accuracy: ", nn.accuracy(X_test_final, y_test_final))
+    # 5-fold cross validation
+    # splitting the training data into 5 folds
+    X_train_1 = X_train_final[:int(0.2 * len(X_train_final))]
+    X_train_2 = X_train_final[int(0.2 * len(X_train_final)):int(0.4 * len(X_train_final))]
+    X_train_3 = X_train_final[int(0.4 * len(X_train_final)):int(0.6 * len(X_train_final))]
+    X_train_4 = X_train_final[int(0.6 * len(X_train_final)):int(0.8 * len(X_train_final))]
+    X_train_5 = X_train_final[int(0.8 * len(X_train_final)):]
+    y_train_1 = y_train_final[:int(0.2 * len(y_train_final))]
+    y_train_2 = y_train_final[int(0.2 * len(y_train_final)):int(0.4 * len(y_train_final))]
+    y_train_3 = y_train_final[int(0.4 * len(y_train_final)):int(0.6 * len(y_train_final))]
+    y_train_4 = y_train_final[int(0.6 * len(y_train_final)):int(0.8 * len(y_train_final))]
+    y_train_5 = y_train_final[int(0.8 * len(y_train_final)):]
+    accuracies = []
+    for i in range(5):
+        if i == 0:
+            X_cross_train = np.concatenate((X_train_2, X_train_3, X_train_4, X_train_5), axis=0)
+            X_cross_val = X_train_1
+            y_cross_train = np.concatenate((y_train_2, y_train_3, y_train_4, y_train_5), axis=0)
+            y_cross_val = y_train_1
+        elif i == 1:
+            X_cross_train = np.concatenate((X_train_1, X_train_3, X_train_4, X_train_5), axis=0)
+            X_cross_val = X_train_2
+            y_cross_train = np.concatenate((y_train_1, y_train_3, y_train_4, y_train_5), axis=0)
+            y_cross_val = y_train_2
+        elif i == 2:
+            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_4, X_train_5), axis=0)
+            X_cross_val = X_train_3
+            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_4, y_train_5), axis=0)
+            y_cross_val = y_train_3
+        elif i == 3:
+            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_5), axis=0)
+            X_cross_val = X_train_4
+            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_5), axis=0)
+            y_cross_val = y_train_4
+        else:
+            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_4), axis=0)
+            X_cross_val = X_train_5
+            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_4), axis=0)
+            y_cross_val = y_train_5
+        # training the model
+        print("Fold " + str(i + 1) + " : ")
+        mlp = MLP(4, 3, 3, 0.01, 500)
+        mlp.train(X_cross_train, y_cross_train)
+        accuracies.append(mlp.accuracy(X_cross_val, y_cross_val))
+        print("Accuracy for fold " + str(i + 1) + " : " + str(accuracies[i]))
+    # training the model on the entire training set
+    print("Average accuracy : " + str(np.mean(accuracies)))
+    mlp = MLP(4, 3, 3, 0.01, 500)
+    mlp.train(X_train_final, y_train_final)
+    print("Accuracy on the validation set : " + str(mlp.accuracy(X_val, y_val)))
+    print("Accuracy on the test set : " + str(mlp.accuracy(X_test_final, y_test_final)))
+
