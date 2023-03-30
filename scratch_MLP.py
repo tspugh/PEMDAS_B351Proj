@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 class MLP:
-    def __init__(self, input_size, hidden_size, output_size, learning_rate):
+    def __init__(self, input_size, hidden_size, output_size, learning_rate, epochs):
         # input_size = number of features
         self.input_size = input_size
         # hidden_size = number of neurons in the hidden layer
@@ -25,6 +25,8 @@ class MLP:
         self.output_layer = np.zeros((1, self.output_size))
         # sse = sum of squared errors
         self.sse = 0
+        # epochs = number of epochs
+        self.epochs = epochs
 
     # sigmoid activation function for the hidden layer
     def sigmoid(self, x):
@@ -91,8 +93,8 @@ class MLP:
 
     # training the neural network
     def train(self, X, y):
-        # training for 250 epochs
-        for epoch in range(250):
+        # training for epochs
+        for epoch in range(self.epochs):
             # training for each sample
             for i in range(len(X)):
                 self.backpropagation_algorithm(X[i], y[i])
@@ -134,3 +136,42 @@ class MLP:
                 correct += 1
         return correct / len(X)
 
+
+if __name__ == "__main__":
+    data = pd.read_csv("iris.data", header=None)
+    data = data.values
+    np.random.shuffle(data)
+    # splitting the data into features and labels
+    X = data[:, 0:4]
+    y = data[:, 4]
+    # encoding the labels
+    encoded_y = np.zeros((len(y), 3))
+    for i in range(len(y)):
+        if y[i] == "Iris-setosa":
+            encoded_y[i] = [1, 0, 0]
+        elif y[i] == "Iris-versicolor":
+            encoded_y[i] = [0, 1, 0]
+        else:
+            encoded_y[i] = [0, 0, 1]
+    # Normalizing the data
+    X = (X - np.mean(X)) / np.std(X)
+    # splitting the data into training and testing sets
+    X_train = X[:int(0.7 * len(X))]
+    X_test_final = X[int(0.7 * len(X)):]
+    y_train = encoded_y[:int(0.7 * len(encoded_y))]
+    y_test_final = encoded_y[int(0.7 * len(encoded_y)):]
+    print(X_test_final)
+    print(y_test_final)
+    # splitting the training data into training and validation sets
+    X_train_final = X_train[:int(0.7 * len(X_train))]
+    X_val = X_train[int(0.7 * len(X_train)):]
+    y_train_final = y_train[:int(0.7 * len(y_train))]
+    y_val = y_train[int(0.7 * len(y_train)):]
+    # creating the neural network
+    nn = MLP(4, 10, 3, 0.01, 1000)
+    # training the neural network
+    nn.train(X_train_final, y_train_final)
+    # calculating the accuracy on the validation set
+    print("Validation Accuracy: ", nn.accuracy(X_val, y_val))
+    # calculating the accuracy on the testing set
+    print("Testing Accuracy: ", nn.accuracy(X_test_final, y_test_final))

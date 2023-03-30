@@ -96,7 +96,7 @@ def dump_smiles(dictionary, file_to_dump_to):
 if __name__ == "__main__":
     #a start and end index of ids to use
     start = 1
-    end = 200
+    end = 1000
 
     #the name of the pickle dump for get_molecule_ids
     id_string = f"tempIds{start},{end}.txt"
