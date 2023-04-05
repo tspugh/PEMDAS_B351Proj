@@ -1,0 +1,3 @@
+Isoxazole
+C1=CON=C1
+TO_BE_CLASSIFIED

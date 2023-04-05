@@ -1,0 +1,3 @@
+Pyrazole
+C1=CNN=C1
+TO_BE_CLASSIFIED

@@ -1,0 +1,3 @@
+1,3,5-Triazine
+C1=NC=NC=N1
+TO_BE_CLASSIFIED

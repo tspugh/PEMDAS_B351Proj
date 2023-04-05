@@ -7,6 +7,26 @@ import os
 import pickle
 
 PATH = ".."
+HEAVY_ATOM_CUTOFF = 10
+MUST_HAVE_NITROGEN = True
+
+def meets_criteria(molecule_name:str):
+    response = requests.get(
+        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
+        f"/{molecule_name}/property/InChI,CanonicalSMILES,Title,"
+        f"HeavyAtomCount/JSON")
+    if response:
+        obj_gotten = response.json()["PropertyTable"][
+                          "Properties"][0]
+        print(obj_gotten)
+        return json_meets_criteria(obj_gotten), obj_gotten
+    else:
+        return False, None
+
+def json_meets_criteria(mol_json):
+    return int(mol_json["HeavyAtomCount"]) <= HEAVY_ATOM_CUTOFF and \
+        (not MUST_HAVE_NITROGEN or "N" in mol_json[
+            "CanonicalSMILES"])
 
 # gets every valid molecule from start index to index+amount based on cid on PubChem
 # returns an array of length end-start+1 containing every InChI id that is returned
@@ -76,12 +96,10 @@ def get_spectra(ids, start, end):
     return holder, refine(ids)
 
 def refine(dicts):
-    HEAVY_ATOM_CUTOFF = 10
-    MUST_HAVE_NITROGEN = True
 
     final = []
     for i in dicts:
-        if i is not None and int(i["HeavyAtomCount"])<=HEAVY_ATOM_CUTOFF and (not MUST_HAVE_NITROGEN or "N" in i["CanonicalSMILES"]):
+        if i is not None and json_meets_criteria(i):
             final.append(i)
 
     return final

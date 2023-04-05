@@ -1,0 +1,3 @@
+Oxazole
+C1=COC=N1
+TO_BE_CLASSIFIED

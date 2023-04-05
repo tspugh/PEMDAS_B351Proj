@@ -1,0 +1,3 @@
+2,4-Thiazolidinedione
+C1C(=O)NC(=O)S1
+TO_BE_CLASSIFIED

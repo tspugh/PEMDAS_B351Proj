@@ -1,0 +1,3 @@
+Isoquinoline
+C1=CC=C2C=NC=CC2=C1
+TO_BE_CLASSIFIED

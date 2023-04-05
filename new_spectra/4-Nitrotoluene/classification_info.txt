@@ -1,0 +1,3 @@
+4-Nitrotoluene
+CC1=CC=C(C=C1)[N+](=O)[O-]
+TO_BE_CLASSIFIED

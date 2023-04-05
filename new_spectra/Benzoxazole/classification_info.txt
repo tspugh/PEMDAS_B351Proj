@@ -1,0 +1,3 @@
+Benzoxazole
+C1=CC=C2C(=C1)N=CO2
+TO_BE_CLASSIFIED

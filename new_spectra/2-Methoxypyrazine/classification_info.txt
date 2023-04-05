@@ -1,0 +1,3 @@
+2-Methoxypyrazine
+COC1=NC=CN=C1
+TO_BE_CLASSIFIED
