@@ -93,24 +93,23 @@ def dump_smiles(dictionary, file_to_dump_to):
     for x in dictionary:
         file_to_dump_to.write(x["CanonicalSMILES"]+"~"+x["Title"]+"\n")
 
-if __name__ == "__main__":
-    #a start and end index of ids to use
-    start = 1
-    end = 1000
+# a start and end index of ids to use
+def run_spectra_and_save(start, end, load_from_file=False):
 
-    #the name of the pickle dump for get_molecule_ids
+    # the name of the pickle dump for get_molecule_ids
     id_string = f"tempIds{start},{end}.txt"
 
-    #gets all cids from start-end and writes them to a txt file in pickled form
-    file_to_write_to = open(id_string, "wb")
-    l = get_molecule_ids(start, end, file_to_write=file_to_write_to)
-    file_to_write_to.close()
+    # gets all cids from start-end and writes them to a txt file in pickled form
+    if not load_from_file:
+        file_to_write_to = open(id_string, "wb")
+        l = get_molecule_ids(start, end, file_to_write=file_to_write_to)
+        file_to_write_to.close()
+    else:
+        # reads from the pickle file and downloads all the spectra
+        file_to_read_from = open(f"tempIds{start},{end}.txt", "rb")
+        l = pickle.load(file_to_read_from)
 
-    # reads from the pickle file and downloads all the spectra
-    # file_to_read_from = open(f"tempIds{start},{end}.txt", "rb")
-    # l = pickle.load(file_to_read_from)
-
-    #ensures all values meet requirements of our project for now
+    # ensures all values meet requirements of our project for now
     refined_molecules = refine(l)
 
     spec, refined_molecules = get_spectra(refined_molecules, start, end)
@@ -119,5 +118,4 @@ if __name__ == "__main__":
     f = open(id_string_smile, "w")
     dump_smiles(refined_molecules, f)
     f.close()
-
 
