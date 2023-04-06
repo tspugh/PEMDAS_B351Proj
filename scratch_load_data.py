@@ -13,6 +13,16 @@ y_values = data[1].values
 # nmr_data = np.column_stack((x_values, y_values))  # Not transposed
 nmr_data = np.column_stack((x_values, y_values)).T  # or Transposed, depending on what's better for the classifier.
 
+# quick attempt at max length and padding the rest with 0's for now (FOR TRANSPOSED)
+max_length = 5000
+num_points = nmr_data.shape[1]
+if num_points < max_length:
+    padded_data = np.zeros((2, max_length))
+    padded_data[:, :num_points] = nmr_data
+    nmr_data = padded_data
+elif num_points > max_length:
+    nmr_data = nmr_data[:, :max_length]
+
 # debug / see whats going
 # np.set_printoptions(formatter={'all': lambda x: str(x) + ','})
 
