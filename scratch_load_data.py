@@ -10,18 +10,15 @@ x_values = data[0].values  # pd.read_csv()
 y_values = data[1].values
 
 # create numpy array of (x,y) points
-# nmr_data = np.column_stack((x_values, y_values))  # Not transposed
-nmr_data = np.column_stack((x_values, y_values)).T  # or Transposed, depending on what's better for the classifier.
+nmr_data = np.column_stack((x_values, y_values))  # Not transposed
+# nmr_data = np.column_stack((x_values, y_values)).T  # or Transposed, depending on what's better for the classifier.
 
 # quick attempt at max length and padding the rest with 0's for now (FOR TRANSPOSED)
 max_length = 5000
-num_points = nmr_data.shape[1]
-if num_points < max_length:
-    padded_data = np.zeros((2, max_length))
-    padded_data[:, :num_points] = nmr_data
-    nmr_data = padded_data
-elif num_points > max_length:
-    nmr_data = nmr_data[:, :max_length]
+if nmr_data.shape[0] < max_length: # add zeros to end of array if data length is less than max length
+    nmr_data = np.pad(nmr_data, ((0, max_length - nmr_data.shape[0]), (0, 0)), mode='constant')
+elif nmr_data.shape[0] > max_length:  # truncate data if length is greater than max length
+    nmr_data = nmr_data[:max_length]
 
 # debug / see whats going
 # np.set_printoptions(formatter={'all': lambda x: str(x) + ','})
@@ -29,11 +26,11 @@ elif num_points > max_length:
 print("NMR data shape:", nmr_data.shape)
 print(nmr_data)
 
-# x_value = nmr_data[8, 0]
-# y_value = nmr_data[8, 1]
+x_value = nmr_data[8, 0]
+y_value = nmr_data[8, 1]
 
-x_value = nmr_data[0, 8]  # transposed, line 9 in csv test
-y_value = nmr_data[1, 8]
+# x_value = nmr_data[0, 8]  # transposed, line 9 in csv test
+# y_value = nmr_data[1, 8]
 print(f'{x_value}\n{y_value}')
 
 
