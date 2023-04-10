@@ -1,3 +1,0 @@
-3-Cyanopyridine
-C1=CC(=CN=C1)C#N
-TO_BE_CLASSIFIED

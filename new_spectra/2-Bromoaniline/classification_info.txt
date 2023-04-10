@@ -1,3 +1,0 @@
-2-Bromoaniline
-C1=CC=C(C(=C1)N)Br
-TO_BE_CLASSIFIED

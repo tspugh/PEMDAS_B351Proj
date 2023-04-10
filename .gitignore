@@ -153,4 +153,5 @@ cython_debug/
 
 #additional
 spectra
+new_spectra_all
 NMR

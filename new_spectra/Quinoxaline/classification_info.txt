@@ -1,3 +1,0 @@
-Quinoxaline
-C1=CC=C2C(=C1)N=CC=N2
-TO_BE_CLASSIFIED

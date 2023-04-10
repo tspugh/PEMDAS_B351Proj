@@ -1,3 +1,0 @@
-Benzohydrazide
-C1=CC=C(C=C1)C(=O)NN
-TO_BE_CLASSIFIED

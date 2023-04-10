@@ -53,13 +53,16 @@ plt.show()
 # SETTING UP OBJECT QUICK, Did this in like 15 minutes, the above is me debugging it, this is just the skeleton with
 # quick copy and paste.
 class SpectraData:
-    def __init__(self, filepath_hnmr, filepath_cnmr):
+    def __init__(self, filepath_hnmr, filepath_cnmr, filepath_ir,
+                 filepath_uv, filepath_ms):
         self.filepath_hnmr = filepath_hnmr
         self.filepath_cnmr = filepath_cnmr
         self.hnmr_data = None
         self.cnmr_data = None
 
         self.filepath_ir = filepath_ir
+        self.filepath_uv = filepath_uv
+        self.filepath_ms = filepath_ms
         self.ir_data = None
 
         # Read data on initialization..

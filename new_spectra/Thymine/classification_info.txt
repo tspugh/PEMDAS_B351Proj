@@ -1,3 +1,0 @@
-Thymine
-CC1=CNC(=O)NC1=O
-TO_BE_CLASSIFIED

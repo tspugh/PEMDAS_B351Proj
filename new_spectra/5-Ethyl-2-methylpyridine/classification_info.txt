@@ -1,3 +1,0 @@
-5-Ethyl-2-methylpyridine
-CCC1=CN=C(C=C1)C
-TO_BE_CLASSIFIED

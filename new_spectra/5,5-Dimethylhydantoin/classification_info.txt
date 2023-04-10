@@ -1,3 +1,0 @@
-5,5-Dimethylhydantoin
-CC1(C(=O)NC(=O)N1)C
-TO_BE_CLASSIFIED

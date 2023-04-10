@@ -1,3 +1,0 @@
-Phthalazine
-C1=CC=C2C=NN=CC2=C1
-TO_BE_CLASSIFIED

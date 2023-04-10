@@ -1,3 +1,0 @@
-3-Chloropyridine
-C1=CC(=CN=C1)Cl
-TO_BE_CLASSIFIED

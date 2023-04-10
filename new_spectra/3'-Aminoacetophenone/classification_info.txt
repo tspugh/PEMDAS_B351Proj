@@ -1,3 +1,0 @@
-3'-Aminoacetophenone
-CC(=O)C1=CC(=CC=C1)N
-TO_BE_CLASSIFIED

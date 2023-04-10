@@ -5,28 +5,38 @@ import nistchempy as nist
 from numpy import empty
 import os
 import pickle
+from time import sleep
 
 PATH = ".."
 HEAVY_ATOM_CUTOFF = 10
 MUST_HAVE_NITROGEN = True
 
 def meets_criteria(molecule_name:str):
-    response = requests.get(
-        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
-        f"/{molecule_name}/property/InChI,CanonicalSMILES,Title,"
-        f"HeavyAtomCount/JSON")
-    if response:
-        obj_gotten = response.json()["PropertyTable"][
-                          "Properties"][0]
-        print(obj_gotten)
-        return json_meets_criteria(obj_gotten), obj_gotten
-    else:
-        return False, None
+    try:
+        response = requests.get(
+            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
+            f"/{molecule_name}/property/InChI,CanonicalSMILES,Title,"
+            f"HeavyAtomCount/JSON")
+        if response:
+            obj_gotten = response.json()["PropertyTable"][
+                              "Properties"][0]
+            print(obj_gotten)
+            if obj_gotten is None:
+                return [False, None]
+            return json_meets_criteria(obj_gotten), obj_gotten
+        return [False, None]
+    except Exception:
+        print("error was made")
+        sleep(1)
+        return [False, None]
+
 
 def json_meets_criteria(mol_json):
-    return int(mol_json["HeavyAtomCount"]) <= HEAVY_ATOM_CUTOFF and \
-        (not MUST_HAVE_NITROGEN or "N" in mol_json[
-            "CanonicalSMILES"])
+    keys = mol_json.keys()
+    if "HeavyAtomCount" in keys and "CanonicalSMILES" in keys and \
+            "Title" in keys:
+        return (int(mol_json["HeavyAtomCount"]) <= HEAVY_ATOM_CUTOFF)
+    return False
 
 # gets every valid molecule from start index to index+amount based on cid on PubChem
 # returns an array of length end-start+1 containing every InChI id that is returned
@@ -43,16 +53,21 @@ def get_molecule_ids(start, end, file_to_write=None):
 
         id = i + start
 
-        response = requests.get(
-            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid"
-            f"/{id}/property/InChI,CanonicalSMILES,Title,"
-            f"HeavyAtomCount/JSON")
-        if response:
-            values.append(response.json()["PropertyTable"][
-                              "Properties"][0])
-            print("found "+str(i))
-        else:
-            values.append(None)
+        try:
+            response = requests.get(
+                f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid"
+                f"/{id}/property/InChI,CanonicalSMILES,Title,"
+                f"HeavyAtomCount/JSON")
+            if response:
+                j = response.json()["PropertyTable"][
+                                  "Properties"][0]
+                values.append(j)
+                print("found "+str(i))
+            else:
+                values.append(None)
+        except Exception:
+            print("error for now")
+            sleep(1)
     if file_to_write is not None:
         pickle.dump(values, file_to_write, protocol=pickle.HIGHEST_PROTOCOL)
     return values
@@ -85,9 +100,15 @@ def get_spectra(ids, start, end):
                     compound = search.compounds[0]
                     print(search.compounds[0])
                     compound.get_all_spectra()
-                    fuldir = dir+"/"+compound.name+"/"
+                    fuldir = dir+"/"+ids[i]["Title"]+"/"
                     if not os.path.exists(fuldir):
                         os.makedirs(fuldir)
+                    q = open(os.path.join(fuldir, "classification_info.txt"),"w")
+                    q.write(
+                        ids[i]["Title"] + "\n" + ids[i][
+                            "CanonicalSMILES"] + "\n" +
+                             "Negative")
+                    q.close()
                     compound.save_all_spectra(path_dir=fuldir)
                     holder.setdefault(one_id, compound)
                 else:
@@ -137,3 +158,5 @@ def run_spectra_and_save(start, end, load_from_file=False):
     dump_smiles(refined_molecules, f)
     f.close()
 
+if __name__ == "__main__":
+    run_spectra_and_save(1,50001,True)

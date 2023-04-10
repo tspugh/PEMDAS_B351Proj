@@ -1,3 +1,0 @@
-Pyrrole
-C1=CNC=C1
-TO_BE_CLASSIFIED

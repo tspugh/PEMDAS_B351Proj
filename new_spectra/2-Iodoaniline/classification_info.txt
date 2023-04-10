@@ -1,3 +1,0 @@
-2-Iodoaniline
-C1=CC=C(C(=C1)N)I
-TO_BE_CLASSIFIED

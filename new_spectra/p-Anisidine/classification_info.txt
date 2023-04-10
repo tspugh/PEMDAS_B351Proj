@@ -1,3 +1,0 @@
-p-Anisidine
-COC1=CC=C(C=C1)N
-TO_BE_CLASSIFIED

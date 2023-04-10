@@ -1,3 +1,0 @@
-4-Nitrosophenol
-C1=CC(=CC=C1N=O)O
-TO_BE_CLASSIFIED
