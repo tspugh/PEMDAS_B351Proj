@@ -7,6 +7,26 @@ import os
 import pickle
 
 PATH = ".."
+HEAVY_ATOM_CUTOFF = 10
+MUST_HAVE_NITROGEN = True
+
+def meets_criteria(molecule_name:str):
+    response = requests.get(
+        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name"
+        f"/{molecule_name}/property/InChI,CanonicalSMILES,Title,"
+        f"HeavyAtomCount/JSON")
+    if response:
+        obj_gotten = response.json()["PropertyTable"][
+                          "Properties"][0]
+        print(obj_gotten)
+        return json_meets_criteria(obj_gotten), obj_gotten
+    else:
+        return False, None
+
+def json_meets_criteria(mol_json):
+    return int(mol_json["HeavyAtomCount"]) <= HEAVY_ATOM_CUTOFF and \
+        (not MUST_HAVE_NITROGEN or "N" in mol_json[
+            "CanonicalSMILES"])
 
 # gets every valid molecule from start index to index+amount based on cid on PubChem
 # returns an array of length end-start+1 containing every InChI id that is returned
@@ -76,12 +96,10 @@ def get_spectra(ids, start, end):
     return holder, refine(ids)
 
 def refine(dicts):
-    HEAVY_ATOM_CUTOFF = 10
-    MUST_HAVE_NITROGEN = True
 
     final = []
     for i in dicts:
-        if i is not None and int(i["HeavyAtomCount"])<=HEAVY_ATOM_CUTOFF and (not MUST_HAVE_NITROGEN or "N" in i["CanonicalSMILES"]):
+        if i is not None and json_meets_criteria(i):
             final.append(i)
 
     return final
@@ -93,24 +111,23 @@ def dump_smiles(dictionary, file_to_dump_to):
     for x in dictionary:
         file_to_dump_to.write(x["CanonicalSMILES"]+"~"+x["Title"]+"\n")
 
-if __name__ == "__main__":
-    #a start and end index of ids to use
-    start = 1
-    end = 200
+# a start and end index of ids to use
+def run_spectra_and_save(start, end, load_from_file=False):
 
-    #the name of the pickle dump for get_molecule_ids
+    # the name of the pickle dump for get_molecule_ids
     id_string = f"tempIds{start},{end}.txt"
 
-    #gets all cids from start-end and writes them to a txt file in pickled form
-    file_to_write_to = open(id_string, "wb")
-    l = get_molecule_ids(start, end, file_to_write=file_to_write_to)
-    file_to_write_to.close()
+    # gets all cids from start-end and writes them to a txt file in pickled form
+    if not load_from_file:
+        file_to_write_to = open(id_string, "wb")
+        l = get_molecule_ids(start, end, file_to_write=file_to_write_to)
+        file_to_write_to.close()
+    else:
+        # reads from the pickle file and downloads all the spectra
+        file_to_read_from = open(f"tempIds{start},{end}.txt", "rb")
+        l = pickle.load(file_to_read_from)
 
-    # reads from the pickle file and downloads all the spectra
-    # file_to_read_from = open(f"tempIds{start},{end}.txt", "rb")
-    # l = pickle.load(file_to_read_from)
-
-    #ensures all values meet requirements of our project for now
+    # ensures all values meet requirements of our project for now
     refined_molecules = refine(l)
 
     spec, refined_molecules = get_spectra(refined_molecules, start, end)
@@ -119,5 +136,4 @@ if __name__ == "__main__":
     f = open(id_string_smile, "w")
     dump_smiles(refined_molecules, f)
     f.close()
-
 

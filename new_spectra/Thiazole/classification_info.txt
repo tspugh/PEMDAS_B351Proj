@@ -1,0 +1,3 @@
+Thiazole
+C1=CSC=N1
+TO_BE_CLASSIFIED

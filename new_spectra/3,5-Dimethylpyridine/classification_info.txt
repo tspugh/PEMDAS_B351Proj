@@ -1,0 +1,3 @@
+3,5-Dimethylpyridine
+CC1=CC(=CN=C1)C
+TO_BE_CLASSIFIED

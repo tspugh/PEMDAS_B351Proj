@@ -1,0 +1,3 @@
+N-Ethylaniline
+CCNC1=CC=CC=C1
+TO_BE_CLASSIFIED

@@ -1,0 +1,3 @@
+Pyrimidine
+C1=CN=CN=C1
+TO_BE_CLASSIFIED

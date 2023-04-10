@@ -1,0 +1,3 @@
+2-Methyl-5-vinylpyridine
+CC1=NC=C(C=C1)C=C
+TO_BE_CLASSIFIED

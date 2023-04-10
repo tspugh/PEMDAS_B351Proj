@@ -1,0 +1,3 @@
+2-Methylindole
+CC1=CC2=CC=CC=C2N1
+TO_BE_CLASSIFIED

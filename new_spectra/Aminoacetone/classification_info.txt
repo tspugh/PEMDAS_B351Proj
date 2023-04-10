@@ -1,0 +1,3 @@
+Aminoacetone
+CC(=O)CN
+TO_BE_CLASSIFIED

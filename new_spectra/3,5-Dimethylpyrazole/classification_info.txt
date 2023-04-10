@@ -1,0 +1,3 @@
+3,5-Dimethylpyrazole
+CC1=CC(=NN1)C
+TO_BE_CLASSIFIED

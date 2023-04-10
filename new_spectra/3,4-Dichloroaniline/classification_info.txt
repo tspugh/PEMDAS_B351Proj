@@ -1,0 +1,3 @@
+3,4-Dichloroaniline
+C1=CC(=C(C=C1N)Cl)Cl
+TO_BE_CLASSIFIED

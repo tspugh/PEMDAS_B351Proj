@@ -1,0 +1,3 @@
+Pyridazine
+C1=CC=NN=C1
+TO_BE_CLASSIFIED
