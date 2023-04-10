@@ -1,3 +1,0 @@
-Pyridine
-C1=CC=NC=C1
-TO_BE_CLASSIFIED

@@ -1,3 +1,0 @@
-2,4,6-Trimethylpyridine
-CC1=CC(=NC(=C1)C)C
-TO_BE_CLASSIFIED

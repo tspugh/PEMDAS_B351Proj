@@ -1,3 +1,0 @@
-4-Aminophenol
-C1=CC(=CC=C1N)O
-TO_BE_CLASSIFIED

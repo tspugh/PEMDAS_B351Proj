@@ -1,3 +1,0 @@
-o-Toluidine
-CC1=CC=CC=C1N
-TO_BE_CLASSIFIED

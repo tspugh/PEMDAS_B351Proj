@@ -1,3 +1,0 @@
-2-Bromopyridine
-C1=CC=NC(=C1)Br
-TO_BE_CLASSIFIED

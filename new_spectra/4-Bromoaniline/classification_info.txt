@@ -1,3 +1,0 @@
-4-Bromoaniline
-C1=CC(=CC=C1N)Br
-TO_BE_CLASSIFIED

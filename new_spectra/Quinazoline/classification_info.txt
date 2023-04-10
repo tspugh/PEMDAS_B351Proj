@@ -1,3 +1,0 @@
-Quinazoline
-C1=CC=C2C(=C1)C=NC=N2
-TO_BE_CLASSIFIED

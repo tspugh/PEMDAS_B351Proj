@@ -1,3 +1,0 @@
-2-Nitrophenol
-C1=CC=C(C(=C1)[N+](=O)[O-])O
-TO_BE_CLASSIFIED

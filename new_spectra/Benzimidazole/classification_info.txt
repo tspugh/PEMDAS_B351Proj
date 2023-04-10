@@ -1,3 +1,0 @@
-Benzimidazole
-C1=CC=C2C(=C1)NC=N2
-TO_BE_CLASSIFIED

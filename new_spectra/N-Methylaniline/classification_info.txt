@@ -1,3 +1,0 @@
-N-Methylaniline
-CNC1=CC=CC=C1
-TO_BE_CLASSIFIED

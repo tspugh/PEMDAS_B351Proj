@@ -1,3 +1,0 @@
-N,N-Dimethylformamide
-CN(C)C=O
-TO_BE_CLASSIFIED

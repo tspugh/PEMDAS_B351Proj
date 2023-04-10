@@ -1,3 +1,0 @@
-Benzylamine
-C1=CC=C(C=C1)CN
-TO_BE_CLASSIFIED

@@ -1,3 +1,0 @@
-2,5-Piperazinedione
-C1C(=O)NCC(=O)N1
-TO_BE_CLASSIFIED

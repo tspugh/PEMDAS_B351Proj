@@ -1,3 +1,0 @@
-2-Methoxy-5-methylaniline
-CC1=CC(=C(C=C1)OC)N
-TO_BE_CLASSIFIED
