@@ -71,6 +71,7 @@ import matplotlib.pyplot as plt
 class Molecule:
     def __init__(self, ir_filename=None, uv_filename=None, cnmr_filename=None, hnmr_filename=None, ms_filename=None,
                  class_filename=None):
+
         self.ir_data = None
         self.uv_data = None
         self.cnmr_data = None
@@ -81,14 +82,15 @@ class Molecule:
         # Store
         self.ms_filename = ms_filename
         self.hnmr_filename = hnmr_filename
+        self.cnmr_filename = cnmr_filename
 
         # Initialization
         if ms_filename is not None:
             self.ms_data = self.read_ms_data()
         if hnmr_filename is not None:
-            self.hnmr_data = self.read_hnmr_data()
-        # if cnmr_filename is not None:
-        #     self.cnmr_data = self.read(cnmr_filename)
+            self.hnmr_data = self.read_csv_data('HNMR')
+        if cnmr_filename is not None:
+            self.cnmr_data = self.read_csv_data("CNMR")
         # if ir_filename is not None:
         #     self.ir_data = self.read(ir_filename)
         # if uv_filename is not None:
@@ -118,16 +120,25 @@ class Molecule:
 
         return y_values
 
-    def read_hnmr_data(self):
-        data = pd.read_csv(self.hnmr_filename, header=None)
+    def read_csv_data(self, data_type):
+        """ Reads HNMR/CNMR data, fills in missing 0's between peaks and 0's before and after where data begins"""
+        if data_type == 'HNMR':
+            start = -1.99272
+            stop = 10
+            increment = 0.000336
+            filename = self.hnmr_filename
+        elif data_type == 'CNMR':
+            start = -19.9524
+            stop = 230
+            increment = 0.001907
+            filename = self.cnmr_filename
+
+        data = pd.read_csv(filename, header=None)
 
         x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
         y_values = data[1].values[::-1]
 
-        start = -1.99272
-        stop = 10
-        increment = 0.000336
-
+        # Set start stop increments depending on HNMR or CNMR, and filename specs
         new_x_values = np.arange(start, stop, increment)
         new_y_values = np.zeros_like(new_x_values)
 
@@ -136,7 +147,6 @@ class Molecule:
             if 0 <= index < len(new_y_values):  # max length check
                 new_y_values[index] = y_values[i]  # and slot it in there
 
-        print(new_y_values)
         return new_y_values
 
 
@@ -146,8 +156,14 @@ test_m = Molecule(
 
 
 # HNMR TEST
-print(test_m.ms_data)
-print(test_m.hnmr_data)
+start = -1.99272
+stop = 10
+increment = 0.000336
+
+hnmr_x_values = np.arange(start, stop, increment)
+hnmr_y_values = test_m.hnmr_data
+plt.plot(hnmr_x_values, hnmr_y_values) # **REMOVE*** this is for debugging
+plt.show()
 
 
 # MS TEST
