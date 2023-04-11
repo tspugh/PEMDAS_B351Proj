@@ -77,27 +77,31 @@ class Molecule:
         self.ms_data = None
         self.classification_data = None
 
+        # Store
+        self.ms_filename = ms_filename
+
         # Initialization
         if ms_filename is not None:
-            self.ms_data = self.read_ms_data(ms_filename)
+            self.ms_data = self.read_ms_data()
+        if hnmr_filename is not None:
+            self.hnmr_filename = self.read_hnmr_data(hnmr_filename)
+        # if cnmr_filename is not None:
+        #     self.cnmr_data = self.read(cnmr_filename)
         # if ir_filename is not None:
         #     self.ir_data = self.read(ir_filename)
         # if uv_filename is not None:
         #     self.uv_data = self.read(uv_filename)
-        # if cnmr_filename is not None:
-        #     self.cnmr_data = self.read(cnmr_filename)
-        # if hnmr_filename is not None:
-        #     self.hnmr_filename = self.read(hnmr_filename)
         # if class_filename is not None:
         #     self.classification_data = self.read(class_filename)
 
-    def read_ms_data(self, filename):
+    def read_ms_data(self):
         """ Reads the MS data, standardizes the array to set length of 200 and return the array """
 
         # read and process to numpy arrays using jcamp
-        jcamp_dict = jcamp.jcamp_readfile(filename)
+        jcamp_dict = jcamp.jcamp_readfile(self.ms_filename)
         original_x_values = np.array(jcamp_dict['x'])
         original_y_values = np.array(jcamp_dict['y'])
+
 
         # max_length setter, can use tommys global dict later for readability
         max_length = 200
@@ -113,3 +117,10 @@ class Molecule:
 
         return y_values
 
+
+test_m = Molecule(ms_filename='/Users/zesha/OneDrive/Desktop/School/IU/Spring 2023/AI/....FINAL_PROJECT/MS JDX/C924469_MS_0.jdx')
+
+x_values = np.arange(len(test_m.ms_data))  # ***REMOVE** This is for debugging
+plt.figure()
+plt.stem(x_values, test_m.ms_data, 'm-', markerfmt=' ', basefmt=' ', linefmt='m-', use_line_collection=True)
+plt.show()
