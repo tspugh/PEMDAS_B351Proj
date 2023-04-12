@@ -9,6 +9,9 @@ import glob
 class IRError(Exception):
     pass
 
+class UVError(Exception):
+    pass
+
 # from numpy import zeros, ndarray
 
 # PATH = "../spectra"
@@ -79,6 +82,9 @@ class Molecule:
     IR_LOWER_REQ = 600
     IR_UPPER_REQ = 3800
 
+    UV_LOWER_REQ = 225
+    UV_UPPER_REQ = 250
+
     def __init__(self, ir_filename=None, uv_filename=None, cnmr_filename=None, hnmr_filename=None, ms_filename=None,
                  class_filename=None, debug=False):
 
@@ -98,6 +104,7 @@ class Molecule:
         self.hnmr_filename = hnmr_filename
         self.cnmr_filename = cnmr_filename
         self.ir_filename = ir_filename
+        self.uv_filename = uv_filename
 
         # Initialization
         if ms_filename is not None:
@@ -109,7 +116,7 @@ class Molecule:
         if ir_filename is not None:
             self.ir_data = self.read_ir_data(ir_filename)
         # if uv_filename is not None:
-        #     self.uv_data = self.read(uv_filename)
+        #     self.uv_data = self.read_uv_data(uv_filename)
         # if class_filename is not None:
         #     self.classification_data = self.read(class_filename)
 
@@ -220,6 +227,61 @@ class Molecule:
 
         except IRError as er:
             if self.debug: print(f"IR Data Incompatible: {er}")
+            self.invalid_flag = True
+        except Exception as e:
+            if self.debug: print(e)
+            self.invalid_flag = True
+
+        return None
+
+    def read_uv_data(self):
+        try:
+            jcamp_dict = jcamp.jcamp_readfile(self.uv_filename)
+            x = jcamp_dict["x"]
+            y = jcamp_dict["y"]
+
+            fit_length = 1000
+
+            if x[0] > self.UV_LOWER_REQ or x[-1] < self.UV_UPPER_REQ:
+                raise IRError("Data Range Invalid")
+
+            if x[0] > x[1]:
+                x = x[::-1]
+                y = y[::-1]
+
+            new_x = np.zeros(fit_length)
+            new_y = np.zeros(fit_length)
+
+            min_index = 0
+            max_index = len(x)-1
+            while x[min_index] < self.UV_LOWER_REQ:
+                min_index+=1
+            while x[max_index] > self.UV_UPPER_REQ:
+                max_index-=1
+
+            index_range = max_index-min_index
+            ratio = (fit_length-1)/index_range
+
+            new_x[fit_length-1] = x[max_index]
+            new_y[fit_length-1] = y[max_index-1]
+
+            index = 0
+            #interpolation
+            for k in range(fit_length-1):
+                if 0 <= k%ratio < 1:
+                    new_x[k] = x[index]
+                    new_y[k] = y[index]
+                    index += 1
+                else:
+                    new_x[k] = (x[index]-x[index-1])*k/ratio + x[
+                        index-1]
+                    new_y[k] = (y[index] - y[index - 1]) * k / ratio + \
+                               y[index - 1]
+
+            return np.concatenate(new_x, new_y)
+
+        except UVError as er:
+            if self.debug: print(f"UV Data Incompatible: {er}")
             self.invalid_flag = True
         except Exception as e:
             if self.debug: print(e)
