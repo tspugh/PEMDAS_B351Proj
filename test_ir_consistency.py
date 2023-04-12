@@ -315,6 +315,52 @@ def test_mins_ir(dirs):
 		print(f"bound of {3700+(4000-3700)/tries*x}:\n")
 		print(f"ir: {counts[x]}, max length: {max_ir_len[x]}")
 
+def test_mins_uv(dirs):
+	# 225 - 250
+
+	MIN_UV = 225
+	MAX_UV = 250
+
+	max_uv_len = 0
+
+	count_ir = 0
+	count_uv = 0
+
+	tries = 20
+	counts = np.zeros(tries)
+	max_uv_len = np.zeros(tries)
+
+	for j in range(len(dirs[0])):
+		uv = jcamp.jcamp_readfile(dirs[1][j])
+
+		if not uv["x"][0]<uv["x"][1]:
+			uv["x"] = uv["x"][::-1]
+			uv["y"] = uv["y"][::-1]
+
+		index = 0
+		for lower in np.linspace(225, 350, tries):
+			if(uv["x"][0]<=MIN_UV
+					and
+					uv["x"][-1] >= lower):
+				counts[index] += 1
+				if len(uv["x"])>max_uv_len[index]:
+					max_uv_len[index] = len(uv["x"])
+			index += 1
+
+		"""
+		if (uv['xunits'].lower() != "micrometers" and uv["x"][
+			0] <= MIN_UV
+				and
+				uv["x"][-1] >= MAX_UV):
+			count_uv += 1
+			if len(uv["x"]) > max_uv_len:
+				max_uv_len = len(uv["x"])
+				"""
+
+	for x in range(tries):
+		print(f"bound of {225+(350-225)/tries*x}:\n")
+		print(f"uv: {counts[x]}, max length: {max_uv_len[x]}")
+
 if __name__ == "__main__":
 	sys.stdout = open('result_of_spectra.txt', 'wt')
 
@@ -341,7 +387,7 @@ if __name__ == "__main__":
 	find_inclusive(dirs[0], 820, 5000, 50)
 	"""
 
-	test_mins_ir(dirs)
+	test_mins_uv(dirs)
 
 
 

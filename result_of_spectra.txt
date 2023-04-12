@@ -1,60 +1,60 @@
-bound of 3700.0:
+bound of 225.0:
 
-ir: 273.0, max length: 56417.0
-bound of 3715.0:
+uv: 217.0, max length: 1000.0
+bound of 231.25:
 
-ir: 273.0, max length: 56417.0
-bound of 3730.0:
+uv: 212.0, max length: 1000.0
+bound of 237.5:
 
-ir: 273.0, max length: 56417.0
-bound of 3745.0:
+uv: 205.0, max length: 1000.0
+bound of 243.75:
 
-ir: 272.0, max length: 56417.0
-bound of 3760.0:
+uv: 195.0, max length: 1000.0
+bound of 250.0:
 
-ir: 271.0, max length: 56417.0
-bound of 3775.0:
+uv: 187.0, max length: 1000.0
+bound of 256.25:
 
-ir: 270.0, max length: 56417.0
-bound of 3790.0:
+uv: 181.0, max length: 1000.0
+bound of 262.5:
 
-ir: 254.0, max length: 56417.0
-bound of 3805.0:
+uv: 175.0, max length: 1000.0
+bound of 268.75:
 
-ir: 214.0, max length: 56417.0
-bound of 3820.0:
+uv: 163.0, max length: 1000.0
+bound of 275.0:
 
-ir: 204.0, max length: 56417.0
-bound of 3835.0:
+uv: 146.0, max length: 1000.0
+bound of 281.25:
 
-ir: 204.0, max length: 56417.0
-bound of 3850.0:
+uv: 129.0, max length: 1000.0
+bound of 287.5:
 
-ir: 146.0, max length: 56417.0
-bound of 3865.0:
+uv: 107.0, max length: 1000.0
+bound of 293.75:
 
-ir: 146.0, max length: 56417.0
-bound of 3880.0:
+uv: 82.0, max length: 1000.0
+bound of 300.0:
 
-ir: 146.0, max length: 56417.0
-bound of 3895.0:
+uv: 74.0, max length: 1000.0
+bound of 306.25:
 
-ir: 146.0, max length: 56417.0
-bound of 3910.0:
+uv: 66.0, max length: 999.0
+bound of 312.5:
 
-ir: 145.0, max length: 56417.0
-bound of 3925.0:
+uv: 58.0, max length: 999.0
+bound of 318.75:
 
-ir: 145.0, max length: 56417.0
-bound of 3940.0:
+uv: 47.0, max length: 683.0
+bound of 325.0:
 
-ir: 144.0, max length: 56417.0
-bound of 3955.0:
+uv: 40.0, max length: 683.0
+bound of 331.25:
 
-ir: 35.0, max length: 56417.0
-bound of 3970.0:
+uv: 35.0, max length: 683.0
+bound of 337.5:
 
-ir: 24.0, max length: 30690.0
-bound of 3985.0:
+uv: 28.0, max length: 683.0
+bound of 343.75:
 
-ir: 21.0, max length: 30690.0
+uv: 25.0, max length: 683.0
