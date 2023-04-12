@@ -34,16 +34,16 @@ save_spectrum_to_file = function(spec, filepath) {
 		
 		hz = spec.hz() + spec.scaleWidth();
 		dHz = -spec.scaleWidth() / spec.count();		
-		pt = spec.count()-1;
-		dPt = -1;
-		endPt = -1;
+		pt = 0;
+		dPt = 1;
+		endPt = spec.count();
 		
 		rounder = Math.pow(10,aDecimals);
 		ppm = Math.round(hz / spec.frequency() * rounder) / rounder;
 		dPpm = Math.round(dHz / spec.frequency() * rounder) / rounder;		
 		
-		// Increment me and store me in the CSV.
-		mapObj.index = 0;
+		// Decrement me and store me in the CSV.
+		mapObj.index = spec.count()-1;
 		
 		while ( pt !== endPt ) {		
 			//mapObj.hz = hz.toFixed(aDecimals);
@@ -56,7 +56,7 @@ save_spectrum_to_file = function(spec, filepath) {
 				strm.writeln(aFormat.formatMap(mapObj));					
 			}
 			//hz += dHz;
-			mapObj.index = mapObj.index + 1;
+			mapObj.index = mapObj.index - 1;
 			ppm += dPpm;
 			pt += dPt;
 		}
