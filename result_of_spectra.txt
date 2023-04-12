@@ -1,0 +1,60 @@
+bound of 225.0:
+
+uv: 217.0, max length: 1000.0
+bound of 231.25:
+
+uv: 212.0, max length: 1000.0
+bound of 237.5:
+
+uv: 205.0, max length: 1000.0
+bound of 243.75:
+
+uv: 195.0, max length: 1000.0
+bound of 250.0:
+
+uv: 187.0, max length: 1000.0
+bound of 256.25:
+
+uv: 181.0, max length: 1000.0
+bound of 262.5:
+
+uv: 175.0, max length: 1000.0
+bound of 268.75:
+
+uv: 163.0, max length: 1000.0
+bound of 275.0:
+
+uv: 146.0, max length: 1000.0
+bound of 281.25:
+
+uv: 129.0, max length: 1000.0
+bound of 287.5:
+
+uv: 107.0, max length: 1000.0
+bound of 293.75:
+
+uv: 82.0, max length: 1000.0
+bound of 300.0:
+
+uv: 74.0, max length: 1000.0
+bound of 306.25:
+
+uv: 66.0, max length: 999.0
+bound of 312.5:
+
+uv: 58.0, max length: 999.0
+bound of 318.75:
+
+uv: 47.0, max length: 683.0
+bound of 325.0:
+
+uv: 40.0, max length: 683.0
+bound of 331.25:
+
+uv: 35.0, max length: 683.0
+bound of 337.5:
+
+uv: 28.0, max length: 683.0
+bound of 343.75:
+
+uv: 25.0, max length: 683.0

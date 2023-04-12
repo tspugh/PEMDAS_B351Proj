@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
+class IRError(Exception):
+    pass
+
+class UVError(Exception):
+    pass
 
 # from numpy import zeros, ndarray
 
@@ -73,6 +78,13 @@ import glob
 
 
 class Molecule:
+
+    IR_LOWER_REQ = 600
+    IR_UPPER_REQ = 3800
+
+    UV_LOWER_REQ = 225
+    UV_UPPER_REQ = 250
+
     def __init__(self, ir_filename=None, uv_filename=None, cnmr_filename=None, hnmr_filename=None, ms_filename=None,
                  class_filename=None, debug=False):
 
@@ -85,10 +97,14 @@ class Molecule:
 
         self.debug = debug
 
+        self.invalid_flag = False
+
         # Store
         self.ms_filename = ms_filename
         self.hnmr_filename = hnmr_filename
         self.cnmr_filename = cnmr_filename
+        self.ir_filename = ir_filename
+        self.uv_filename = uv_filename
 
         # Initialization
         if ms_filename is not None:
@@ -97,10 +113,10 @@ class Molecule:
             self.hnmr_data = self.read_csv_data('HNMR')
         if cnmr_filename is not None:
             self.cnmr_data = self.read_csv_data("CNMR")
-        # if ir_filename is not None:
-        #     self.ir_data = self.read(ir_filename)
+        if ir_filename is not None:
+            self.ir_data = self.read_ir_data(ir_filename)
         # if uv_filename is not None:
-        #     self.uv_data = self.read(uv_filename)
+        #     self.uv_data = self.read_uv_data(uv_filename)
         # if class_filename is not None:
         #     self.classification_data = self.read(class_filename)
 
@@ -153,14 +169,126 @@ class Molecule:
         new_y_values = np.zeros_like(new_x_values)
 
         for i, x_val in enumerate(x_values):
-            index = int(round((
-                                          x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
                 new_y_values[index] = y_values[i]  # and slot it in there
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
         return new_y_values
+
+    def read_ir_data(self):
+        try:
+            jcamp_dict = jcamp.jcamp_readfile(self.ir_filename)
+            x = jcamp_dict["x"]
+            y = jcamp_dict["y"]
+
+            fit_length = 56420
+
+            if jcamp_dict["xunits"].lower() == "micrometers":
+                raise IRError("Data Unit Invalid")
+            if x[0] > self.IR_LOWER_REQ or x[-1] < self.IR_UPPER_REQ:
+                raise IRError("Data Range Invalid")
+
+            if x[0] > x[1]:
+                x = x[::-1]
+                y = y[::-1]
+
+            new_x = np.zeros(fit_length)
+            new_y = np.zeros(fit_length)
+
+            min_index = 0
+            max_index = len(x)-1
+            while x[min_index] < self.IR_LOWER_REQ:
+                min_index+=1
+            while x[max_index] > self.IR_UPPER_REQ:
+                max_index-=1
+
+            index_range = max_index-min_index
+            ratio = (fit_length-1)/index_range
+
+            new_x[fit_length-1] = x[max_index]
+            new_y[fit_length-1] = y[max_index-1]
+
+            index = 0
+            #interpolation
+            for k in range(fit_length-1):
+                if 0 <= k%ratio < 1:
+                    new_x[k] = x[index]
+                    new_y[k] = y[index]
+                    index += 1
+                else:
+                    new_x[k] = (x[index]-x[index-1])*k/ratio + x[
+                        index-1]
+                    new_y[k] = (y[index] - y[index - 1]) * k / ratio + \
+                               y[index - 1]
+
+            return np.concatenate(new_x, new_y)
+
+        except IRError as er:
+            if self.debug: print(f"IR Data Incompatible: {er}")
+            self.invalid_flag = True
+        except Exception as e:
+            if self.debug: print(e)
+            self.invalid_flag = True
+
+        return None
+
+    def read_uv_data(self):
+        try:
+            jcamp_dict = jcamp.jcamp_readfile(self.uv_filename)
+            x = jcamp_dict["x"]
+            y = jcamp_dict["y"]
+
+            fit_length = 1000
+
+            if x[0] > self.UV_LOWER_REQ or x[-1] < self.UV_UPPER_REQ:
+                raise IRError("Data Range Invalid")
+
+            if x[0] > x[1]:
+                x = x[::-1]
+                y = y[::-1]
+
+            new_x = np.zeros(fit_length)
+            new_y = np.zeros(fit_length)
+
+            min_index = 0
+            max_index = len(x)-1
+            while x[min_index] < self.UV_LOWER_REQ:
+                min_index+=1
+            while x[max_index] > self.UV_UPPER_REQ:
+                max_index-=1
+
+            index_range = max_index-min_index
+            ratio = (fit_length-1)/index_range
+
+            new_x[fit_length-1] = x[max_index]
+            new_y[fit_length-1] = y[max_index-1]
+
+            index = 0
+            #interpolation
+            for k in range(fit_length-1):
+                if 0 <= k%ratio < 1:
+                    new_x[k] = x[index]
+                    new_y[k] = y[index]
+                    index += 1
+                else:
+                    new_x[k] = (x[index]-x[index-1])*k/ratio + x[
+                        index-1]
+                    new_y[k] = (y[index] - y[index - 1]) * k / ratio + \
+                               y[index - 1]
+
+            return np.concatenate(new_x, new_y)
+
+        except UVError as er:
+            if self.debug: print(f"UV Data Incompatible: {er}")
+            self.invalid_flag = True
+        except Exception as e:
+            if self.debug: print(e)
+            self.invalid_flag = True
+
+        return None
+
 
     def combine_data(self):
         """combine the data in order: starting index will be 1 or 0 depnding if it has nitrogen (handled in loading data)
@@ -172,7 +300,8 @@ class Molecule:
 
 
 def load_data_both(debug=False):
-    root_directory = '/Users/zesha/OneDrive/Desktop/School/IU/Spring 2023/AI/....FINAL_PROJECT/PEMDAS_B351Proj'
+    # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
+    root_directory = ''
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
@@ -216,10 +345,10 @@ def load_data_both(debug=False):
                     molecule.monster_array = np.insert(molecule.monster_array, 0, 1)  # 1 for Nitrogenic
                 else:
                     molecule.monster_array = np.insert(molecule.monster_array, 0, 0)  # 0 for Not
-
-                molecules.append(molecule)
+                if not molecule.invalid_flag:
+                    molecules.append(molecule)
             except Exception as e:
-                # print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
+                print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
                 continue
 
     return molecules
@@ -241,4 +370,13 @@ if __name__ == "__main__":
     print(f"After that is CNMR data. Array size {molecule_data[0].cnmr_data.shape}")
     print(f"After that is HNMR data. Array size {molecule_data[0].hnmr_data.shape}")
     print(f"After that is MS data. Array size {molecule_data[0].ms_data.shape}")
+    print(
+        f"After that is IR data. Array size"
+        f" {molecule_data[0].ir_data.shape}")
     print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
+
+
+    ##### AND THE FINISH #### didnt test this
+    monster_arrays = [mol.monster_array for mol in molecule_data]
+    data_table = np.vstack(monster_arrays)
+

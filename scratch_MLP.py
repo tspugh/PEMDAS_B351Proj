@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from data_harvester import spectra_reader as sr
 
 class MLP:
     def __init__(self, input_size, hidden_size, output_size, learning_rate, epochs):
@@ -138,84 +139,84 @@ class MLP:
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("iris.data", header=None)
-    data = data.values
-    np.random.shuffle(data)
-    # splitting the data into features and labels
-    X = data[:, 0:4]
-    y = data[:, 4]
-    # encoding the labels
-    encoded_y = np.zeros((len(y), 3))
-    for i in range(len(y)):
-        if y[i] == "Iris-setosa":
-            encoded_y[i] = [1, 0, 0]
-        elif y[i] == "Iris-versicolor":
-            encoded_y[i] = [0, 1, 0]
-        else:
-            encoded_y[i] = [0, 0, 1]
-    # Normalizing the data
-    X = (X - np.mean(X)) / np.std(X)
-    # splitting the data into training and testing sets
-    X_train = X[:int(0.7 * len(X))]
-    X_test_final = X[int(0.7 * len(X)):]
-    y_train = encoded_y[:int(0.7 * len(encoded_y))]
-    y_test_final = encoded_y[int(0.7 * len(encoded_y)):]
-    print(X_test_final)
-    print(y_test_final)
-    # splitting the training data into training and validation sets
-    X_train_final = X_train[:int(0.7 * len(X_train))]
-    X_val = X_train[int(0.7 * len(X_train)):]
-    y_train_final = y_train[:int(0.7 * len(y_train))]
-    y_val = y_train[int(0.7 * len(y_train)):]
-    # 5-fold cross validation
-    # splitting the training data into 5 folds
-    X_train_1 = X_train_final[:int(0.2 * len(X_train_final))]
-    X_train_2 = X_train_final[int(0.2 * len(X_train_final)):int(0.4 * len(X_train_final))]
-    X_train_3 = X_train_final[int(0.4 * len(X_train_final)):int(0.6 * len(X_train_final))]
-    X_train_4 = X_train_final[int(0.6 * len(X_train_final)):int(0.8 * len(X_train_final))]
-    X_train_5 = X_train_final[int(0.8 * len(X_train_final)):]
-    y_train_1 = y_train_final[:int(0.2 * len(y_train_final))]
-    y_train_2 = y_train_final[int(0.2 * len(y_train_final)):int(0.4 * len(y_train_final))]
-    y_train_3 = y_train_final[int(0.4 * len(y_train_final)):int(0.6 * len(y_train_final))]
-    y_train_4 = y_train_final[int(0.6 * len(y_train_final)):int(0.8 * len(y_train_final))]
-    y_train_5 = y_train_final[int(0.8 * len(y_train_final)):]
+    # Loading the data
+    molecules = sr.load_data_both(debug=False)
+    # Creating a np array to extract data from the array of objects
+    molecules_array = np.array(molecules)
+    # Extracting the data from the array of objects
+    for i in range(len(molecules)):
+        molecules_array[i] = molecules[i].monster_array
+    print(molecules_array.shape)
+    print(molecules_array[0])
+    print(molecules_array[-1])
+    y = []
+    X = []
+    for i in range(len(molecules_array)):
+        y.append(molecules_array[i][0])
+        X.append(molecules_array[i][1:])
+    # Converting the data into numpy arrays
+    y = np.array(y)
+    X = np.vstack(X)
+    print(X.shape)
+    print(y.shape)
+    print(X)
+    print(y)
+    # Splitting the data into training and testing sets
+    X_train = X[:int(0.8 * len(X))]
+    X_test = X[int(0.8 * len(X)):]
+    y_train = y[:int(0.8 * len(y))]
+    y_test = y[int(0.8 * len(y)):]
+    # Splitting the data for 5-fold cross validation
+    X_train_1 = X_train[:int(0.2 * len(X_train))]
+    X_train_2 = X_train[int(0.2 * len(X_train)):int(0.4 * len(X_train))]
+    X_train_3 = X_train[int(0.4 * len(X_train)):int(0.6 * len(X_train))]
+    X_train_4 = X_train[int(0.6 * len(X_train)):int(0.8 * len(X_train))]
+    X_train_5 = X_train[int(0.8 * len(X_train)):]
+    y_train_1 = y_train[:int(0.2 * len(y_train))]
+    y_train_2 = y_train[int(0.2 * len(y_train)):int(0.4 * len(y_train))]
+    y_train_3 = y_train[int(0.4 * len(y_train)):int(0.6 * len(y_train))]
+    y_train_4 = y_train[int(0.6 * len(y_train)):int(0.8 * len(y_train))]
+    y_train_5 = y_train[int(0.8 * len(y_train)):]
     accuracies = []
     for i in range(5):
+        print("Fold: ", i + 1)
         if i == 0:
-            X_cross_train = np.concatenate((X_train_2, X_train_3, X_train_4, X_train_5), axis=0)
-            X_cross_val = X_train_1
-            y_cross_train = np.concatenate((y_train_2, y_train_3, y_train_4, y_train_5), axis=0)
-            y_cross_val = y_train_1
+            X_fold_train = np.concatenate((X_train_2, X_train_3, X_train_4, X_train_5))
+            X_fold_test = X_train_1
+            y_fold_train = np.concatenate((y_train_2, y_train_3, y_train_4, y_train_5))
+            y_fold_test = y_train_1
         elif i == 1:
-            X_cross_train = np.concatenate((X_train_1, X_train_3, X_train_4, X_train_5), axis=0)
-            X_cross_val = X_train_2
-            y_cross_train = np.concatenate((y_train_1, y_train_3, y_train_4, y_train_5), axis=0)
-            y_cross_val = y_train_2
+            X_fold_train = np.concatenate((X_train_1, X_train_3, X_train_4, X_train_5))
+            X_fold_test = X_train_2
+            y_fold_train = np.concatenate((y_train_1, y_train_3, y_train_4, y_train_5))
+            y_fold_test = y_train_2
         elif i == 2:
-            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_4, X_train_5), axis=0)
-            X_cross_val = X_train_3
-            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_4, y_train_5), axis=0)
-            y_cross_val = y_train_3
+            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_4, X_train_5))
+            X_fold_test = X_train_3
+            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_4, y_train_5))
+            y_fold_test = y_train_3
         elif i == 3:
-            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_5), axis=0)
-            X_cross_val = X_train_4
-            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_5), axis=0)
-            y_cross_val = y_train_4
+            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_5))
+            X_fold_test = X_train_4
+            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_5))
+            y_fold_test = y_train_4
         else:
-            X_cross_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_4), axis=0)
-            X_cross_val = X_train_5
-            y_cross_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_4), axis=0)
-            y_cross_val = y_train_5
-        # training the model
-        print("Fold " + str(i + 1) + " : ")
-        mlp = MLP(4, 3, 3, 0.01, 500)
-        mlp.train(X_cross_train, y_cross_train)
-        accuracies.append(mlp.accuracy(X_cross_val, y_cross_val))
-        print("Accuracy for fold " + str(i + 1) + " : " + str(accuracies[i]))
-    # training the model on the entire training set
-    print("Average accuracy : " + str(np.mean(accuracies)))
-    mlp = MLP(4, 3, 3, 0.01, 500)
-    mlp.train(X_train_final, y_train_final)
-    print("Accuracy on the validation set : " + str(mlp.accuracy(X_val, y_val)))
-    print("Accuracy on the test set : " + str(mlp.accuracy(X_test_final, y_test_final)))
+            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_4))
+            X_fold_test = X_train_5
+            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_4))
+            y_fold_test = y_train_5
+        # Creating the model
+        mlp = MLP(len(X[0]), 100, 1, learning_rate=0.01, epochs=1000)
+        # Training the model
+        mlp.train(X_fold_train, y_fold_train)
+        # Testing the model
+        accuracy = mlp.accuracy(X_fold_test, y_fold_test)
+        accuracies.append(accuracy)
+        print("Accuracy for fold " + str(i + 1) + ": " + str(accuracy))
+    print("Average accuracy: " + str(sum(accuracies) / len(accuracies)))
+    mlp = MLP(len(X[0]), 100, 1, learning_rate=0.01, epochs=1000)
+    mlp.train(X_train, y_train)
+    print("Accuracy on the test set: " + str(mlp.accuracy(X_test, y_test)))
+
+
 
