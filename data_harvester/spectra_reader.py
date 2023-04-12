@@ -153,8 +153,7 @@ class Molecule:
         new_y_values = np.zeros_like(new_x_values)
 
         for i, x_val in enumerate(x_values):
-            index = int(round((
-                                          x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
                 new_y_values[index] = y_values[i]  # and slot it in there
 
@@ -219,7 +218,7 @@ def load_data_both(debug=False):
 
                 molecules.append(molecule)
             except Exception as e:
-                # print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
+                print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
                 continue
 
     return molecules
@@ -242,3 +241,9 @@ if __name__ == "__main__":
     print(f"After that is HNMR data. Array size {molecule_data[0].hnmr_data.shape}")
     print(f"After that is MS data. Array size {molecule_data[0].ms_data.shape}")
     print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
+
+
+    ##### AND THE FINISH #### didnt test this
+    monster_arrays = [mol.monster_array for mol in molecule_data]
+    data_table = np.vstack(monster_arrays)
+
