@@ -43,7 +43,9 @@ X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y
 # Split the training data into 5 folds
 kf = sklearn.model_selection.KFold(n_splits=5, shuffle=True)
 accuracies = []
+count = 0
 for train_index, test_index in kf.split(X_train):
+    print("Fold", count + 1)
     X_fold_train, X_fold_test = X_train[train_index], X_train[test_index]
     y_fold_train, y_fold_test = y_train[train_index], y_train[test_index]
 
@@ -54,9 +56,10 @@ for train_index, test_index in kf.split(X_train):
     # Testing the model
     accuracy = clf.score(X_fold_test, y_fold_test)
     accuracies.append(accuracy)
-    print(accuracy)
-print(np.mean(accuracies))
+    print("Accuracy for fold", count + 1, ":", accuracy)
+    count += 1
+print("Average accuracy in 5-fold cross validation:", np.mean(accuracies))
 clf = mlp(hidden_layer_sizes=(100), max_iter=1000)
 clf.fit(X_train, y_train)
 accuracy = clf.score(X_test, y_test)
-print(accuracy)
+print("Accuracy on test set:", accuracy)
