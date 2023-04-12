@@ -109,7 +109,6 @@ class Molecule:
 
     def read_ms_data(self):
         """ Reads the MS data, standardizes the array to set length of 200 and return the array """
-
         # read and process to numpy arrays using jcamp
         jcamp_dict = jcamp.jcamp_readfile(self.ms_filename)
         original_x_values = np.array(jcamp_dict['x'])
@@ -154,7 +153,8 @@ class Molecule:
         new_y_values = np.zeros_like(new_x_values)
 
         for i, x_val in enumerate(x_values):
-            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+            index = int(round((
+                                          x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
                 new_y_values[index] = y_values[i]  # and slot it in there
 
@@ -163,53 +163,12 @@ class Molecule:
         return new_y_values
 
     def combine_data(self):
+        """combine the data in order: starting index will be 1 or 0 depnding if it has nitrogen (handled in loading data)
+        then cnmr_data.shape: 131072,
+        then hnmr_data: 35693,
+        then ms_data: 200) """
         self.monster_array = np.concatenate((self.cnmr_data, self.hnmr_data, self.ms_data))
         return self.monster_array
-
-
-def load_data(debug=False):
-    root_directory = '/Users/zesha/OneDrive/Desktop/School/IU/Spring 2023/AI/....FINAL_PROJECT/PEMDAS_B351Proj/Nitrogenic'
-
-    # define the filenames to search for
-    filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
-
-    # create an empty list to hold the Molecule objects
-    molecules = []
-
-    # iterate over each molecule directory
-    for molecule_dir in os.listdir(root_directory):
-        # create a dictionary to hold the filenames for this molecule
-        filetype_to_filenames = {}
-
-        # iterate over each filename pattern to search for
-        for pattern in filenames_to_search:
-            # create the full search pattern for the current file type
-            search_pattern = os.path.join(root_directory, molecule_dir, pattern)
-
-            # search for all files matching the pattern and add them to the list for the current file type
-            matched_filenames = glob.glob(search_pattern)
-            filetype_to_filenames[pattern] = matched_filenames
-
-        # try to create the Molecule object with the filenames
-        try:
-            ir_filename = next(iter(filetype_to_filenames['*_IR_*.jdx']), None)
-            uv_filename = next(iter(filetype_to_filenames['*_UV_*.jdx']), None)
-            cnmr_filename = next(iter(filetype_to_filenames['13C.csv']), None)
-            hnmr_filename = next(iter(filetype_to_filenames['1H.csv']), None)
-            ms_filename = next(iter(filetype_to_filenames['*_MS_*.jdx']), None)
-            class_filename = next(iter(filetype_to_filenames['classification_info.txt']), None)
-
-            if debug:
-                molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename, class_filename, debug=True)
-            else:
-                molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename, class_filename)
-
-            molecules.append(molecule)
-        except Exception as e:
-            # print(f"Error processing files in '{os.path.join(root_directory, molecule_dir)}': {e}")
-            continue
-
-    return molecules
 
 
 def load_data_both(debug=False):
@@ -253,6 +212,11 @@ def load_data_both(debug=False):
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename)
 
+                if dir_name == 'Nitrogenic':
+                    molecule.monster_array = np.insert(molecule.monster_array, 0, 1)  # 1 for Nitrogenic
+                else:
+                    molecule.monster_array = np.insert(molecule.monster_array, 0, 0)  # 0 for Not
+
                 molecules.append(molecule)
             except Exception as e:
                 # print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
@@ -260,16 +224,21 @@ def load_data_both(debug=False):
 
     return molecules
 
-if __name__ == "__main__":
-    molecule_data = load_data2(debug=True)
 
+if __name__ == "__main__":
+    molecule_data = load_data_both(debug=False)
 
     # MS TEST
-    x_values = np.arange(len(molecule_data[2].ms_data))  # ***REMOVE** This is for debugging
-    plt.figure()
-    plt.stem(x_values, molecule_data[2].ms_data, 'm-', markerfmt=' ', basefmt=' ', linefmt='m-', use_line_collection=True)
-    plt.show()
+    # x_values = np.arange(len(molecule_data[2].ms_data))  # ***REMOVE** This is for debugging
+    # plt.figure()
+    # plt.stem(x_values, molecule_data[2].ms_data, 'm-', markerfmt=' ', basefmt=' ', linefmt='m-',
+    #          use_line_collection=True)
+    # plt.show()
 
     # Get MonsteR ArrAY
-    print(molecule_data[2].monster_array.shape)
 
+    print(f'Monster array size. First index is 0 or 1 for having nitrogenic group (1 is true) {molecule_data[0].monster_array.shape}')
+    print(f"After that is CNMR data. Array size {molecule_data[0].cnmr_data.shape}")
+    print(f"After that is HNMR data. Array size {molecule_data[0].hnmr_data.shape}")
+    print(f"After that is MS data. Array size {molecule_data[0].ms_data.shape}")
+    print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
