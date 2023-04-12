@@ -26,7 +26,7 @@ save_spectrum_to_file = function(spec, filepath) {
 	var file = new File(filepath);
 	var mapObj = {},
 	    aDecimals = 6, rounder,
-	    aFormat = "{ppm},{real}",
+	    aFormat = "{ppm},{index},{real}",
 	    hz, dHz, pt, dPt, endPt, ppm, dPpm, strm;	    
 	
 	if (file.open(File.WriteOnly)) {
@@ -42,17 +42,21 @@ save_spectrum_to_file = function(spec, filepath) {
 		ppm = Math.round(hz / spec.frequency() * rounder) / rounder;
 		dPpm = Math.round(dHz / spec.frequency() * rounder) / rounder;		
 		
+		// Increment me and store me in the CSV.
+		mapObj.index = 0;
+		
 		while ( pt !== endPt ) {		
 			//mapObj.hz = hz.toFixed(aDecimals);
 			mapObj.ppm = ppm.toFixed(aDecimals);
 			//mapObj.pts = pt;
-			mapObj.real = spec.real(pt).toFixed(aDecimals);				
+			mapObj.real = spec.real(pt).toFixed(aDecimals);							
 			//mapObj.imag = spec.imag(pt).toFixed(aDecimals);
 			// Compression: Don't write 0s. This hugely reduces file size and running time.
 			if ( mapObj.real != 0 ) {
 				strm.writeln(aFormat.formatMap(mapObj));					
 			}
 			//hz += dHz;
+			mapObj.index = mapObj.index + 1;
 			ppm += dPpm;
 			pt += dPt;
 		}
@@ -176,6 +180,6 @@ batch_prediction_smiles = function(filepath) {
 	} while ( line != "" );
 	file.close();
 	print("Done!");
-};	
+};
 
-//batch_prediction_smiles(Dir.home() + "/" + SMILES_FILE);
+batch_prediction_smiles(Dir.home() + "/" + SMILES_FILE);
