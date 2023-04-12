@@ -171,7 +171,8 @@ class Molecule:
 
 
 def load_data_both(debug=False):
-    root_directory = '/Users/zesha/OneDrive/Desktop/School/IU/Spring 2023/AI/....FINAL_PROJECT/PEMDAS_B351Proj'
+    # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
+    root_directory = ''
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
