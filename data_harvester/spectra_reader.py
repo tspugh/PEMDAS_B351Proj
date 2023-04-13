@@ -114,9 +114,10 @@ class Molecule:
         if cnmr_filename is not None:
             self.cnmr_data = self.read_csv_data("CNMR")
         if ir_filename is not None:
-            self.ir_data = self.read_ir_data(ir_filename)
-        # if uv_filename is not None:
-        #     self.uv_data = self.read_uv_data(uv_filename)
+            self.ir_data = self.read_ir_data()
+        if uv_filename is not None:
+             self.uv_data = self.read_uv_data()
+
         # if class_filename is not None:
         #     self.classification_data = self.read(class_filename)
 
@@ -160,7 +161,7 @@ class Molecule:
             filename = self.cnmr_filename
 
         data = pd.read_csv(filename, header=None)
-
+        print(data)
         y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
         index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
 
@@ -332,7 +333,6 @@ def load_data_both(debug=False):
                 hnmr_filename = next(iter(filetype_to_filenames['1H.csv']), None)
                 ms_filename = next(iter(filetype_to_filenames['*_MS_*.jdx']), None)
                 class_filename = next(iter(filetype_to_filenames['classification_info.txt']), None)
-
                 if debug:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename, debug=True)
@@ -347,7 +347,8 @@ def load_data_both(debug=False):
                 if not molecule.invalid_flag:
                     molecules.append(molecule)
             except Exception as e:
-                print(f"Error processing files in '{os.path.join(subdirectory, molecule_dir)}': {e}")
+                print(f"Error processing files in '"
+                      f"{os.path.join(subdirectory, molecule_dir)}': {e}")
                 continue
 
     return molecules
