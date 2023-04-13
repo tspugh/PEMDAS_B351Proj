@@ -218,12 +218,13 @@ class Molecule:
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*k/ratio + x[
+                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                               + x[
                         index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * k / ratio + \
+                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                               ratio + \
                                y[index - 1]
-
-            return np.concatenate(new_x, new_y)
+            return np.concatenate([new_x,new_y])
 
         except IRError as er:
             if self.debug: print(f"IR Data Incompatible: {er}")
@@ -273,12 +274,14 @@ class Molecule:
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*k/ratio + x[
+                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                               + x[
                         index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * k / ratio + \
+                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                               ratio + \
                                y[index - 1]
 
-            return np.concatenate(new_x, new_y)
+            return np.concatenate([new_x,new_y])
 
         except UVError as er:
             if self.debug: print(f"UV Data Incompatible: {er}")
@@ -295,13 +298,38 @@ class Molecule:
         then cnmr_data.shape: 131072,
         then hnmr_data: 35693,
         then ms_data: 200) """
-        self.monster_array = np.concatenate((self.cnmr_data, self.hnmr_data, self.ms_data))
+        #self.monster_array = np.concatenate((self.cnmr_data,
+        # self.hnmr_data, self.ms_data))
+        try:
+            self.monster_array = np.concatenate([self.ms_data,
+                                             self.ir_data,
+                                             self.uv_data])
+            if self.debug: print("Success")
+        except Exception as e:
+            self.invalid_flag = True
+            self.monster_array = None
         return self.monster_array
+
+    def __str__(self):
+        to_return = f"ID: {self.__hash__()} Valid:" \
+               f"{self.invalid_flag==False}"
+        if not self.invalid_flag:
+            if type(self.ms_data) is type(np.zeros(1)):
+                to_return += f", MS: {self.ms_data.__len__()}"
+            if type(self.ir_data) is type(np.zeros(1)):
+                to_return += f", IR: {self.ir_data.__len__()}"
+            if type(self.uv_data)  is type(np.zeros(1)):
+                to_return += f", UV: {self.uv_data.__len__()}"
+            if type(self.hnmr_data)  is type(np.zeros(1)):
+                to_return += f", HNMR: {self.hnmr_data.__len__()}"
+            if type(self.cnmr_data)  is type(np.zeros(1)):
+                to_return += f", CNMR: {self.cnmr_data.__len__()}"
+        return to_return
 
 
 def load_data_both(debug=False):
     # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
-    root_directory = ''
+    root_directory = '../new_spectra_all'
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
@@ -323,7 +351,8 @@ def load_data_both(debug=False):
 
                 # search for all files matching the pattern and add them to the list for the current file type
                 matched_filenames = glob.glob(search_pattern)
-                filetype_to_filenames[pattern] = matched_filenames
+                filetype_to_filenames.setdefault(
+                    pattern, matched_filenames)
 
             # try to create the Molecule object with the filenames
             try:
@@ -339,12 +368,12 @@ def load_data_both(debug=False):
                 else:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename)
-
-                if dir_name == 'Nitrogenic':
-                    molecule.monster_array = np.insert(molecule.monster_array, 0, 1)  # 1 for Nitrogenic
-                else:
-                    molecule.monster_array = np.insert(molecule.monster_array, 0, 0)  # 0 for Not
+                #print(molecule)
                 if not molecule.invalid_flag:
+                    if dir_name == 'Nitrogenic':
+                        molecule.monster_array = np.insert(molecule.monster_array, 0, 1)  # 1 for Nitrogenic
+                    else:
+                        molecule.monster_array = np.insert(molecule.monster_array, 0, 0)  # 0 for Not
                     molecules.append(molecule)
             except Exception as e:
                 print(f"Error processing files in '"
@@ -366,13 +395,20 @@ if __name__ == "__main__":
 
     # Get MonsteR ArrAY
 
-    print(f'Monster array size. First index is 0 or 1 for having nitrogenic group (1 is true) {molecule_data[0].monster_array.shape}')
-    print(f"After that is CNMR data. Array size {molecule_data[0].cnmr_data.shape}")
-    print(f"After that is HNMR data. Array size {molecule_data[0].hnmr_data.shape}")
-    print(f"After that is MS data. Array size {molecule_data[0].ms_data.shape}")
-    print(
-        f"After that is IR data. Array size"
-        f" {molecule_data[0].ir_data.shape}")
+    print(f'Monster array size. First index is 0 or 1 for having '
+          f'nitrogenic group (1 is true) '
+          f'{np.shape(molecule_data[0].monster_array)}')
+    print(f"The molecules have data arrays of length: "
+          f"{str(molecule_data[0])}")
+    #print(f"After that is CNMR data. Array size
+    # {molecule_data[0].cnmr_data.shape}")
+    #print(f"After that is HNMR data. Array size
+    # {molecule_data[0].hnmr_data.shape}")
+    #print(f"After that is MS data. Array size
+    # {molecule_data[0].ms_data.shape}")
+    #print(
+    #    f"After that is IR data. Array size"
+    #    f" {molecule_data[0].ir_data.shape}")
     print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
 
 
