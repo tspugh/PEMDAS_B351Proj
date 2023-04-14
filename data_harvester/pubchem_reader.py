@@ -35,6 +35,18 @@ def json_meets_criteria(mol_json):
     keys = mol_json.keys()
     if "HeavyAtomCount" in keys and "CanonicalSMILES" in keys and \
             "Title" in keys:
+        if  ("Ni" in mol_json[
+        "CanonicalSMILES"]) or ("Na" in mol_json[
+        "CanonicalSMILES"]) or ("Nb" in mol_json[
+        "CanonicalSMILES"]) or ("Ne" in mol_json[
+        "CanonicalSMILES"]) or ("Mn" in mol_json[
+        "CanonicalSMILES"]) or ("Rn" in mol_json[
+        "CanonicalSMILES"]) or ("No" in mol_json[
+        "CanonicalSMILES"]) or ("Zn" in mol_json[
+        "CanonicalSMILES"]) or ("Sn" in mol_json[
+        "CanonicalSMILES"]):
+            print("shoot")
+            return False
         return (int(mol_json["HeavyAtomCount"]) <= HEAVY_ATOM_CUTOFF)
     return False
 
@@ -100,14 +112,22 @@ def get_spectra(ids, start, end):
                     compound = search.compounds[0]
                     print(search.compounds[0])
                     compound.get_all_spectra()
-                    fuldir = dir+"/"+ids[i]["Title"]+"/"
+                    nitrogen = False
+                    if "N" in ids[i][
+                            "CanonicalSMILES"]:
+                        nitrogen = True
+                        fuldir = dir+"/Nitrogenic/"+ids[i]["Title"]+"/"
+                    else:
+                        fuldir = dir + "/NoNitrogen/" + ids[i][
+                            "Title"] + "/"
                     if not os.path.exists(fuldir):
                         os.makedirs(fuldir)
                     q = open(os.path.join(fuldir, "classification_info.txt"),"w")
                     q.write(
                         ids[i]["Title"] + "\n" + ids[i][
                             "CanonicalSMILES"] + "\n" +
-                             "Negative")
+                             f""
+                             f"{'Positive' if nitrogen else 'Negative'}")
                     q.close()
                     compound.save_all_spectra(path_dir=fuldir)
                     holder.setdefault(one_id, compound)
@@ -159,4 +179,4 @@ def run_spectra_and_save(start, end, load_from_file=False):
     f.close()
 
 if __name__ == "__main__":
-    run_spectra_and_save(1,50001,True)
+    run_spectra_and_save(50002,150000,False)

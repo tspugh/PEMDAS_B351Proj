@@ -85,6 +85,10 @@ class Molecule:
     UV_LOWER_REQ = 225
     UV_UPPER_REQ = 250
 
+    UV_FIT_LENGTH = 1000
+    IR_FIT_LENGTH = 56420
+    MS_FIT_LENGTH = 200
+
     def __init__(self, ir_filename=None, uv_filename=None, cnmr_filename=None, hnmr_filename=None, ms_filename=None,
                  class_filename=None, debug=False):
 
@@ -140,7 +144,9 @@ class Molecule:
         # fill the zero'd out y array comparing to X
         for i, x in enumerate(original_x_values):
             index = int(round(x))  # to compare, eh im being safe with the rounding and casting
-            if index < max_length:  # just a check in case we are over 200, as well, though it seems they never get that high
+            if index < self.MS_FIT_LENGTH:  # just a check in case we are over
+                # 200,
+                # as well, though it seems they never get that high
                 y_values[index] = original_y_values[i]  # and slot it in, x to correspond y in order
 
         if self.debug: print("Successful MS Read")
@@ -161,7 +167,6 @@ class Molecule:
             filename = self.cnmr_filename
 
         data = pd.read_csv(filename, header=None)
-        print(data)
         y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
         index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
 
@@ -183,8 +188,6 @@ class Molecule:
             x = jcamp_dict["x"]
             y = jcamp_dict["y"]
 
-            fit_length = 56420
-
             if jcamp_dict["xunits"].lower() == "micrometers":
                 raise IRError("Data Unit Invalid")
             if x[0] > self.IR_LOWER_REQ or x[-1] < self.IR_UPPER_REQ:
@@ -194,8 +197,10 @@ class Molecule:
                 x = x[::-1]
                 y = y[::-1]
 
-            new_x = np.zeros(fit_length)
-            new_y = np.zeros(fit_length)
+            new_x = np.zeros(self.IR_FIT_LENGTH)
+            new_y = np.zeros(self.IR_FIT_LENGTH)
+
+            fit_length = self.IR_FIT_LENGTH
 
             min_index = 0
             max_index = len(x)-1
@@ -250,8 +255,10 @@ class Molecule:
                 x = x[::-1]
                 y = y[::-1]
 
-            new_x = np.zeros(fit_length)
-            new_y = np.zeros(fit_length)
+            new_x = np.zeros(self.UV_FIT_LENGTH)
+            new_y = np.zeros(self.UV_FIT_LENGTH)
+
+            fit_length = self.UV_FIT_LENGTH
 
             min_index = 0
             max_index = len(x)-1
@@ -362,6 +369,11 @@ def load_data_both(debug=False):
                 hnmr_filename = next(iter(filetype_to_filenames['1H.csv']), None)
                 ms_filename = next(iter(filetype_to_filenames['*_MS_*.jdx']), None)
                 class_filename = next(iter(filetype_to_filenames['classification_info.txt']), None)
+
+                #IMPORTANT do not leave here forever
+                cnmr_filename = None
+                hnmr_filename = None
+
                 if debug:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename, debug=True)
@@ -382,9 +394,38 @@ def load_data_both(debug=False):
 
     return molecules
 
+def plot_together(molecule:Molecule):
+
+    plt.figure(figsize=(14, 4))
+    f, ax = plt.subplots()
+    ax.set_title('IR, UV, MS spectra')
+    plt.subplot(131)
+    v = molecule.read_ir_data()
+    plt.plot(v[:molecule.IR_FIT_LENGTH], v[molecule.IR_FIT_LENGTH:],
+             'r')
+    plt.xlabel("Wavenumber (1/CM)")
+    plt.ylabel("Transmitance")
+    plt.subplot(132)
+    q = molecule.read_uv_data()
+    plt.plot(q[:molecule.UV_FIT_LENGTH], q[molecule.UV_FIT_LENGTH:],
+             'b')
+    plt.xlabel("Wavelength (NM)")
+    plt.ylabel("Transmitance")
+    plt.subplot(133)
+    r = molecule.read_ms_data()
+    plt.plot(range(0,molecule.MS_FIT_LENGTH), r,
+             'g')
+    plt.xlabel("Mass Number")
+    plt.ylabel("Transmitance")
+    plt.subplot_tool()
+    plt.show()
+
 
 if __name__ == "__main__":
     molecule_data = load_data_both(debug=False)
+
+    mol = molecule_data[0]
+    plot_together(mol)
 
     # MS TEST
     # x_values = np.arange(len(molecule_data[2].ms_data))  # ***REMOVE** This is for debugging
