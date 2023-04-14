@@ -2,10 +2,10 @@
  A project for Spring 2023 at IU Bloomington for B351 - Intro to Artificial Intelligence
 
 ## Team Members
-- Cullen Sullivan
 - Praneeth Bhattiprolu
-- Tommy Pugh
 - Trevor Buechler
+- Thomas Pugh
+- Cullen Sullivan
 - Zeshawn Zahid
 
 ## Project Description
@@ -19,5 +19,4 @@
 - 'scratch_mlp.py' - contains the code for the scratch implementation of the MLP
 
 ## Files still to be added
-- code for making simple arrays of data for the NMR data
 - ipynb files for running models in a simple notebook

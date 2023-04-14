@@ -308,9 +308,11 @@ class Molecule:
         #self.monster_array = np.concatenate((self.cnmr_data,
         # self.hnmr_data, self.ms_data))
         try:
-            self.monster_array = np.concatenate([self.ms_data,
-                                             self.ir_data,
-                                             self.uv_data])
+            self.monster_array = np.concatenate([self.cnmr_data,
+                                                 self.hnmr_data,
+                                                 self.ms_data,
+                                                 self.ir_data,
+                                                 self.uv_data,])
             if self.debug: print("Success")
         except Exception as e:
             self.invalid_flag = True
@@ -336,7 +338,7 @@ class Molecule:
 
 def load_data_both(debug=False):
     # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
-    root_directory = '../new_spectra_all'
+    root_directory = ''
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
@@ -369,10 +371,6 @@ def load_data_both(debug=False):
                 hnmr_filename = next(iter(filetype_to_filenames['1H.csv']), None)
                 ms_filename = next(iter(filetype_to_filenames['*_MS_*.jdx']), None)
                 class_filename = next(iter(filetype_to_filenames['classification_info.txt']), None)
-
-                #IMPORTANT do not leave here forever
-                cnmr_filename = None
-                hnmr_filename = None
 
                 if debug:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,

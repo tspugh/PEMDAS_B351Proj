@@ -152,7 +152,7 @@ if __name__ == "__main__":
     y = []
     X = []
     for i in range(len(molecules_array)):
-        y.append(molecules_array[i][0])
+        y.append([molecules_array[i][0]])
         X.append(molecules_array[i][1:])
     # Converting the data into numpy arrays
     y = np.array(y)
@@ -166,54 +166,6 @@ if __name__ == "__main__":
     X_test = X[int(0.8 * len(X)):]
     y_train = y[:int(0.8 * len(y))]
     y_test = y[int(0.8 * len(y)):]
-    # Splitting the data for 5-fold cross validation
-    X_train_1 = X_train[:int(0.2 * len(X_train))]
-    X_train_2 = X_train[int(0.2 * len(X_train)):int(0.4 * len(X_train))]
-    X_train_3 = X_train[int(0.4 * len(X_train)):int(0.6 * len(X_train))]
-    X_train_4 = X_train[int(0.6 * len(X_train)):int(0.8 * len(X_train))]
-    X_train_5 = X_train[int(0.8 * len(X_train)):]
-    y_train_1 = y_train[:int(0.2 * len(y_train))]
-    y_train_2 = y_train[int(0.2 * len(y_train)):int(0.4 * len(y_train))]
-    y_train_3 = y_train[int(0.4 * len(y_train)):int(0.6 * len(y_train))]
-    y_train_4 = y_train[int(0.6 * len(y_train)):int(0.8 * len(y_train))]
-    y_train_5 = y_train[int(0.8 * len(y_train)):]
-    accuracies = []
-    for i in range(5):
-        print("Fold: ", i + 1)
-        if i == 0:
-            X_fold_train = np.concatenate((X_train_2, X_train_3, X_train_4, X_train_5))
-            X_fold_test = X_train_1
-            y_fold_train = np.concatenate((y_train_2, y_train_3, y_train_4, y_train_5))
-            y_fold_test = y_train_1
-        elif i == 1:
-            X_fold_train = np.concatenate((X_train_1, X_train_3, X_train_4, X_train_5))
-            X_fold_test = X_train_2
-            y_fold_train = np.concatenate((y_train_1, y_train_3, y_train_4, y_train_5))
-            y_fold_test = y_train_2
-        elif i == 2:
-            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_4, X_train_5))
-            X_fold_test = X_train_3
-            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_4, y_train_5))
-            y_fold_test = y_train_3
-        elif i == 3:
-            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_5))
-            X_fold_test = X_train_4
-            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_5))
-            y_fold_test = y_train_4
-        else:
-            X_fold_train = np.concatenate((X_train_1, X_train_2, X_train_3, X_train_4))
-            X_fold_test = X_train_5
-            y_fold_train = np.concatenate((y_train_1, y_train_2, y_train_3, y_train_4))
-            y_fold_test = y_train_5
-        # Creating the model
-        mlp = MLP(len(X[0]), 100, 1, learning_rate=0.01, epochs=1000)
-        # Training the model
-        mlp.train(X_fold_train, y_fold_train)
-        # Testing the model
-        accuracy = mlp.accuracy(X_fold_test, y_fold_test)
-        accuracies.append(accuracy)
-        print("Accuracy for fold " + str(i + 1) + ": " + str(accuracy))
-    print("Average accuracy: " + str(sum(accuracies) / len(accuracies)))
     mlp = MLP(len(X[0]), 100, 1, learning_rate=0.01, epochs=1000)
     mlp.train(X_train, y_train)
     print("Accuracy on the test set: " + str(mlp.accuracy(X_test, y_test)))
