@@ -7,11 +7,14 @@ import os
 import glob
 from scipy.interpolate import CubicSpline
 
+
 class IRError(Exception):
     pass
 
+
 class UVError(Exception):
     pass
+
 
 # from numpy import zeros, ndarray
 
@@ -79,7 +82,6 @@ class UVError(Exception):
 
 
 class Molecule:
-
     IR_LOWER_REQ = 600
     IR_UPPER_REQ = 3800
 
@@ -248,33 +250,33 @@ class Molecule:
             fit_length = self.IR_FIT_LENGTH
 
             min_index = 0
-            max_index = len(x)-1
+            max_index = len(x) - 1
             while x[min_index] < self.IR_LOWER_REQ:
-                min_index+=1
+                min_index += 1
             while x[max_index] > self.IR_UPPER_REQ:
-                max_index-=1
+                max_index -= 1
 
-            index_range = max_index-min_index
-            ratio = (fit_length-1)/index_range
+            index_range = max_index - min_index
+            ratio = (fit_length - 1) / index_range
 
-            new_x[fit_length-1] = x[max_index]
-            new_y[fit_length-1] = y[max_index-1]
+            new_x[fit_length - 1] = x[max_index]
+            new_y[fit_length - 1] = y[max_index - 1]
 
             index = 0
-            #interpolation
-            for k in range(fit_length-1):
-                if 0 <= k%ratio < 1:
+            # interpolation
+            for k in range(fit_length - 1):
+                if 0 <= k % ratio < 1:
                     new_x[k] = x[index]
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                    new_x[k] = (x[index] - x[index - 1]) * (k % ratio) / ratio \
                                + x[
-                        index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                                   index - 1]
+                    new_y[k] = (y[index] - y[index - 1]) * (k % ratio) / \
                                ratio + \
                                y[index - 1]
-            return np.concatenate([new_x,new_y])
+            return np.concatenate([new_x, new_y])
 
         except IRError as er:
             if self.debug: print(f"IR Data Incompatible: {er}")
@@ -306,34 +308,34 @@ class Molecule:
             fit_length = self.UV_FIT_LENGTH
 
             min_index = 0
-            max_index = len(x)-1
+            max_index = len(x) - 1
             while x[min_index] < self.UV_LOWER_REQ:
-                min_index+=1
+                min_index += 1
             while x[max_index] > self.UV_UPPER_REQ:
-                max_index-=1
+                max_index -= 1
 
-            index_range = max_index-min_index
-            ratio = (fit_length-1)/index_range
+            index_range = max_index - min_index
+            ratio = (fit_length - 1) / index_range
 
-            new_x[fit_length-1] = x[max_index]
-            new_y[fit_length-1] = y[max_index-1]
+            new_x[fit_length - 1] = x[max_index]
+            new_y[fit_length - 1] = y[max_index - 1]
 
             index = 0
-            #interpolation
-            for k in range(fit_length-1):
-                if 0 <= k%ratio < 1:
+            # interpolation
+            for k in range(fit_length - 1):
+                if 0 <= k % ratio < 1:
                     new_x[k] = x[index]
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                    new_x[k] = (x[index] - x[index - 1]) * (k % ratio) / ratio \
                                + x[
-                        index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                                   index - 1]
+                    new_y[k] = (y[index] - y[index - 1]) * (k % ratio) / \
                                ratio + \
                                y[index - 1]
 
-            return np.concatenate([new_x,new_y])
+            return np.concatenate([new_x, new_y])
 
         except UVError as er:
             if self.debug: print(f"UV Data Incompatible: {er}")
@@ -349,7 +351,7 @@ class Molecule:
         then cnmr_data.shape: 131072,
         then hnmr_data: 35693,
         then ms_data: 200) """
-        #self.monster_array = np.concatenate((self.cnmr_data,
+        # self.monster_array = np.concatenate((self.cnmr_data,
         # self.hnmr_data, self.ms_data))
         try:
             # self.monster_array = np.concatenate([self.cnmr_data,
@@ -357,7 +359,7 @@ class Molecule:
             #                                      self.ms_data,
             #                                      self.ir_data,
             #                                      self.uv_data,])
-            self.monster_array = self.ms_data
+            self.monster_array = self.ir_data
             if self.debug: print("Success")
         except Exception as e:
             self.invalid_flag = True
@@ -366,17 +368,17 @@ class Molecule:
 
     def __str__(self):
         to_return = f"ID: {self.__hash__()} Valid:" \
-               f"{self.invalid_flag==False}"
+                    f"{self.invalid_flag == False}"
         if not self.invalid_flag:
             if type(self.ms_data) is type(np.zeros(1)):
                 to_return += f", MS: {self.ms_data.__len__()}"
             if type(self.ir_data) is type(np.zeros(1)):
                 to_return += f", IR: {self.ir_data.__len__()}"
-            if type(self.uv_data)  is type(np.zeros(1)):
+            if type(self.uv_data) is type(np.zeros(1)):
                 to_return += f", UV: {self.uv_data.__len__()}"
-            if type(self.hnmr_data)  is type(np.zeros(1)):
+            if type(self.hnmr_data) is type(np.zeros(1)):
                 to_return += f", HNMR: {self.hnmr_data.__len__()}"
-            if type(self.cnmr_data)  is type(np.zeros(1)):
+            if type(self.cnmr_data) is type(np.zeros(1)):
                 to_return += f", CNMR: {self.cnmr_data.__len__()}"
         return to_return
 
@@ -431,7 +433,7 @@ def load_data_both(debug=False):
                 else:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename)
-                #print(molecule)
+                # print(molecule)
                 if not molecule.invalid_flag:
                     # print(f'monster array shape (on load!) {molecule.monster_array.shape}')
                     if dir_name == 'Nitrogenic':
@@ -446,13 +448,13 @@ def load_data_both(debug=False):
                 print(f"Error processing files in '"
                       f"{os.path.join(subdirectory, molecule_dir)}': {e}")
                 continue
-    print(f'nitrogenic: {nitrogenic} '
-          f'non_nitrogenic: {no_nitrogenic}')
+    print(f'Nitrogenic loaded: {nitrogenic}, '
+          f'Non Nitrogenic loaded: {no_nitrogenic}')
 
     return molecules
 
-def plot_together(molecule:Molecule):
 
+def plot_together(molecule: Molecule):
     plt.figure(figsize=(14, 4))
     f, ax = plt.subplots()
     ax.set_title('IR, UV, MS spectra')
@@ -470,7 +472,7 @@ def plot_together(molecule:Molecule):
     plt.ylabel("Transmitance")
     plt.subplot(133)
     r = molecule.read_ms_data()
-    plt.plot(range(0,molecule.MS_FIT_LENGTH), r,
+    plt.plot(range(0, molecule.MS_FIT_LENGTH), r,
              'g')
     plt.xlabel("Mass Number")
     plt.ylabel("Transmitance")
@@ -493,24 +495,17 @@ if __name__ == "__main__":
 
     # Get MonsteR Array
     print(f'Monster array size {molecule_data[0].monster_array.shape}. First index is 0 or 1 for having '
-          f'nitrogenic group (1 is true) '
-          f'{np.shape(molecule_data[0].monster_array)}')
+          f'nitrogenic group (1 is true)')
     print(f"The molecules have data arrays of length: "
           f"{str(molecule_data[0])}")
+    print(f'Folders loaded {len(molecule_data)}')  # Loading 341/352
 
-    #print(f"After that is CNMR data. Array size
-    # {molecule_data[0].cnmr_data.shape}")
-    #print(f"After that is HNMR data. Array size
-    # {molecule_data[0].hnmr_data.shape}")
-    #print(f"After that is MS data. Array size
-    # {molecule_data[0].ms_data.shape}")
-    #print(
-    #    f"After that is IR data. Array size"
-    #    f" {molecule_data[0].ir_data.shape}")
-    print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
+    # Debug more.
+    monster_arrays = [mol.monster_array for mol in molecule_data]
 
+    # Check if all shapes are the same size
+    shapes = [arr.shape for arr in monster_arrays]
+    assert all(shape == shapes[0] for shape in shapes), "All monster_array shapes must be the same size"
 
-    ##### AND THE FINISH #### didnt test this
     monster_arrays = [mol.monster_array for mol in molecule_data]
     data_table = np.vstack(monster_arrays)
-
