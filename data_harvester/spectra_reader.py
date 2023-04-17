@@ -116,10 +116,10 @@ class Molecule:
         # Initialization
         if ms_filename is not None:
             self.ms_data = self.read_ms_data()
-        # if hnmr_filename is not None:
-        #     self.hnmr_data = self.read_csv_data('HNMR')
-        # if cnmr_filename is not None:
-        #     self.cnmr_data = self.read_csv_data("CNMR")
+        if hnmr_filename is not None:
+            self.hnmr_data = self.read_csv_data('HNMR')
+        if cnmr_filename is not None:
+            self.cnmr_data = self.read_csv_data("CNMR")
         # if ir_filename is not None:
         #     self.ir_data = self.read_ir_data_zed()
         # if uv_filename is not None:
@@ -369,10 +369,10 @@ class Molecule:
         # self.monster_array = np.concatenate((self.cnmr_data,
         # self.hnmr_data, self.ms_data))
         try:
-            # self.monster_array = np.concatenate([self.cnmr_data,
-            #                                      self.hnmr_data,
-            #                                      self.ms_data])
-            self.monster_array = self.ir_data
+            self.monster_array = np.concatenate((self.cnmr_data,
+                                                 self.hnmr_data,
+                                                 self.ms_data))
+            # self.monster_array = self.ms_data
             if self.debug: print("Success")
         except Exception as e:
             self.invalid_flag = True
@@ -464,7 +464,10 @@ def load_data_both(debug=False):
     print(f'Nitrogenic loaded: {nitrogenic}, '
           f'Non Nitrogenic loaded: {no_nitrogenic}')
 
-    return molecules, nitrogenic, no_nitrogenic  # Last 2 for assert tests
+    print(f"V. 202313ssZ")
+
+    return molecules
+    # return molecules, nitrogenic, no_nitrogenic # for assert test
 
 
 def plot_together(molecule: Molecule):
@@ -494,7 +497,8 @@ def plot_together(molecule: Molecule):
 
 
 if __name__ == "__main__":
-    molecule_data, nitrogenic_count, no_nitrogenic_count = load_data_both(debug=False)
+    # molecule_data, nitrogenic_count, no_nitrogenic_count = load_data_both(debug=False)
+    molecule_data = load_data_both(debug=False)
 
     # mol = molecule_data[0]
     # plot_together(mol)
@@ -521,8 +525,8 @@ if __name__ == "__main__":
     assert all(shape == shapes[0] for shape in shapes), "All monster_array shapes must be the same size"
 
     # Just check if everything matches
-    assert nitrogenic_count + no_nitrogenic_count == len(
-        molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
+    # assert nitrogenic_count + no_nitrogenic_count == len(
+    #     molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
 
     monster_arrays = [mol.monster_array for mol in molecule_data]
     data_table = np.vstack(monster_arrays)
