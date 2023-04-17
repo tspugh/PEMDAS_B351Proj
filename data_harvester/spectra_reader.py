@@ -120,8 +120,8 @@ class Molecule:
         #     self.hnmr_data = self.read_csv_data('HNMR')
         # if cnmr_filename is not None:
         #     self.cnmr_data = self.read_csv_data("CNMR")
-        if ir_filename is not None:
-            self.ir_data = self.read_ir_data_zed()
+        # if ir_filename is not None:
+        #     self.ir_data = self.read_ir_data_zed()
         # if uv_filename is not None:
         #      self.uv_data = self.read_uv_data()
 
@@ -169,17 +169,32 @@ class Molecule:
             increment = 0.001907
             filename = self.cnmr_filename
 
-        data = pd.read_csv(filename, header=None)
-        y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
-        index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        """Less accurate way, indices are not matching seemingly"""
+        # data = pd.read_csv(filename, header=None)
+        # y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
+        # index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        #
+        # # To calculate length of the Y array
+        # new_x_values = np.arange(start, stop, increment)
+        # new_y_values = np.zeros_like(new_x_values)
+        #
+        # for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        #     if 0 <= index < len(new_y_values):  # max length check
+        #         new_y_values[index] = y_values[i]  # slot it in there
 
-        # To calculate length of the Y array
+        """Should be more accurate, old method of matching indices"""
+        data = pd.read_csv(filename, header=None)
+        x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
+        y_values = data[2].values[::-1]  # Y values are in column 3 now.
+
+        # Set start stop increments depending on HNMR or CNMR, and filename specs
         new_x_values = np.arange(start, stop, increment)
         new_y_values = np.zeros_like(new_x_values)
 
-        for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        for i, x_val in enumerate(x_values):
+            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
-                new_y_values[index] = y_values[i]  # slot it in there
+                new_y_values[index] = y_values[i]  # and slot it in there
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
@@ -356,9 +371,7 @@ class Molecule:
         try:
             # self.monster_array = np.concatenate([self.cnmr_data,
             #                                      self.hnmr_data,
-            #                                      self.ms_data,
-            #                                      self.ir_data,
-            #                                      self.uv_data,])
+            #                                      self.ms_data])
             self.monster_array = self.ir_data
             if self.debug: print("Success")
         except Exception as e:
@@ -451,7 +464,7 @@ def load_data_both(debug=False):
     print(f'Nitrogenic loaded: {nitrogenic}, '
           f'Non Nitrogenic loaded: {no_nitrogenic}')
 
-    return molecules
+    return molecules, nitrogenic, no_nitrogenic  # Last 2 for assert tests
 
 
 def plot_together(molecule: Molecule):
@@ -481,7 +494,7 @@ def plot_together(molecule: Molecule):
 
 
 if __name__ == "__main__":
-    molecule_data = load_data_both(debug=False)
+    molecule_data, nitrogenic_count, no_nitrogenic_count = load_data_both(debug=False)
 
     # mol = molecule_data[0]
     # plot_together(mol)
@@ -506,6 +519,10 @@ if __name__ == "__main__":
     # Check if all shapes are the same size
     shapes = [arr.shape for arr in monster_arrays]
     assert all(shape == shapes[0] for shape in shapes), "All monster_array shapes must be the same size"
+
+    # Just check if everything matches
+    assert nitrogenic_count + no_nitrogenic_count == len(
+        molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
 
     monster_arrays = [mol.monster_array for mol in molecule_data]
     data_table = np.vstack(monster_arrays)
