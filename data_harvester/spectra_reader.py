@@ -169,32 +169,37 @@ class Molecule:
             increment = 0.001907
             filename = self.cnmr_filename
 
-        """Less accurate way, indices are not matching seemingly"""
-        # data = pd.read_csv(filename, header=None)
-        # y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
-        # index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
-        #
-        # # To calculate length of the Y array
-        # new_x_values = np.arange(start, stop, increment)
-        # new_y_values = np.zeros_like(new_x_values)
-        #
-        # for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
-        #     if 0 <= index < len(new_y_values):  # max length check
-        #         new_y_values[index] = y_values[i]  # slot it in there
-
-        """Should be more accurate, old method of matching indices"""
+        """METHOD #1: Perhaps less accurate way, indices are not matching seemingly/offset but still produces okay
+        results. Use this method or below if you want to test. Produces F1 in the low .70's"""
         data = pd.read_csv(filename, header=None)
-        x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
-        y_values = data[2].values[::-1]  # Y values are in column 3 now.
+        y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
+        index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
 
-        # Set start stop increments depending on HNMR or CNMR, and filename specs
+        # To calculate length of the Y array
         new_x_values = np.arange(start, stop, increment)
         new_y_values = np.zeros_like(new_x_values)
 
-        for i, x_val in enumerate(x_values):
-            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+        for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
             if 0 <= index < len(new_y_values):  # max length check
-                new_y_values[index] = y_values[i]  # and slot it in there
+                new_y_values[index] = y_values[i]  # slot it in there
+
+        """METHOD #2 This will produce a F1 score up to .89 if you switch the y_values to the 'MESSED UP DATA'
+        Not sure why, perhaps garbage results. The AI training time is also cut by 100%. But also, 
+        It may be the case that the correct line (currently uncommented) may produce better results
+        than up above, but only very very slightly. """
+        # data = pd.read_csv(filename, header=None)
+        # x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
+        # y_values = data[2].values[::-1]  # Y values are in column 3 now.
+        # # y_values = data[1].values[::-1]  # MESSED UP DATA BUT PRODUCES HIGHER F1
+        #
+        # # Set start stop increments depending on HNMR or CNMR, and filename specs
+        # new_x_values = np.arange(start, stop, increment)
+        # new_y_values = np.zeros_like(new_x_values)
+        #
+        # for i, x_val in enumerate(x_values):
+        #     index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+        #     if 0 <= index < len(new_y_values):  # max length check
+        #         new_y_values[index] = y_values[i]  # and slot it in there
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
@@ -398,7 +403,7 @@ class Molecule:
 
 def load_data_both(debug=False):
     # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
-    root_directory = '../'
+    root_directory = ''
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
