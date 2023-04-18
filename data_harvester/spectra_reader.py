@@ -5,12 +5,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import glob
+from scipy.interpolate import CubicSpline
+
 
 class IRError(Exception):
     pass
 
+
 class UVError(Exception):
     pass
+
 
 # from numpy import zeros, ndarray
 
@@ -78,7 +82,6 @@ class UVError(Exception):
 
 
 class Molecule:
-
     IR_LOWER_REQ = 600
     IR_UPPER_REQ = 3800
 
@@ -117,10 +120,10 @@ class Molecule:
             self.hnmr_data = self.read_csv_data('HNMR')
         if cnmr_filename is not None:
             self.cnmr_data = self.read_csv_data("CNMR")
-        if ir_filename is not None:
-            self.ir_data = self.read_ir_data()
-        if uv_filename is not None:
-             self.uv_data = self.read_uv_data()
+        # if ir_filename is not None:
+        #     self.ir_data = self.read_ir_data_zed()
+        # if uv_filename is not None:
+        #      self.uv_data = self.read_uv_data()
 
         # if class_filename is not None:
         #     self.classification_data = self.read(class_filename)
@@ -166,21 +169,85 @@ class Molecule:
             increment = 0.001907
             filename = self.cnmr_filename
 
-        data = pd.read_csv(filename, header=None)
-        y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
-        index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        """METHOD #1: Perhaps less accurate way, indices are not matching seemingly/offset but still produces okay
+        results. Use this method or below if you want to test. Produces F1 in the low .70's"""
+        # data = pd.read_csv(filename, header=None)
+        # y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
+        # index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        #
+        # # To calculate length of the Y array
+        # new_x_values = np.arange(start, stop, increment)
+        # new_y_values = np.zeros_like(new_x_values)
+        #
+        # for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        #     if 0 <= index < len(new_y_values):  # max length check
+        #         new_y_values[index] = y_values[i]  # slot it in there
 
-        # To calculate length of the Y array
+        """METHOD #2 This will produce a F1 score up to .89 if you switch the y_values to the 'MESSED UP DATA'
+        Not sure why, perhaps garbage results. The AI training time is also cut by 100%. But also, 
+        It may be the case that the correct line (currently uncommented) may produce better results
+        than up above, but only very very slightly. """
+        data = pd.read_csv(filename, header=None)
+        x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
+        y_values = data[2].values[::-1]  # Y values are in column 3 now.
+        # y_values = data[1].values[::-1]  # MESSED UP DATA BUT PRODUCES HIGHER F1
+
+        # Set start stop increments depending on HNMR or CNMR, and filename specs
         new_x_values = np.arange(start, stop, increment)
         new_y_values = np.zeros_like(new_x_values)
 
-        for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        for i, x_val in enumerate(x_values):
+            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
-                new_y_values[index] = y_values[i]  # slot it in there
+                new_y_values[index] = y_values[i]  # and slot it in there
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
         return new_y_values
+
+    def read_ir_data_zed(self):
+        try:
+            jcamp_dict = jcamp.jcamp_readfile(self.ir_filename)
+            original_x_values = np.array(jcamp_dict['x'])
+            original_y_values = np.array(jcamp_dict['y'])
+
+            # File cleanse
+            # if original_x_values.shape != original_y_values.shape:
+            #     print(f'Weird shit at {self.ir_filename}')
+            #     raise IRError("Shape mismatch for IR data")  # possible fix
+
+            if jcamp_dict["xunits"].lower() == "micrometers":
+                raise IRError("Data Unit Invalid")
+            if min(original_x_values) > self.IR_LOWER_REQ or max(original_x_values) < self.IR_UPPER_REQ:
+                raise IRError("Data Range Invalid")
+
+            # Increments for standardized interpolation
+            start = 600
+            stop = 3800
+            step = 5
+            x_values_from_y = np.arange(start, stop + step, step)
+
+            # sorting
+            if original_x_values[0] > original_x_values[1]:
+                original_x_values = original_x_values[::-1]
+                original_y_values = original_y_values[::-1]
+
+            # Interpolation using scipy
+            cs = CubicSpline(original_x_values, original_y_values, extrapolate=False)
+            interpolated_y_values = cs(x_values_from_y)  # Interpolate respect to standardized X
+
+            return interpolated_y_values
+
+        except IRError as er:
+            if self.debug: print(f"IR Data Incompatible: {er}")
+            # print(f'Weird shit at {self.ir_filename}')
+            self.invalid_flag = True
+        except Exception as e:
+            # print(f'Weird shit at {self.ir_filename}')
+            if self.debug: print(f'IR Exception: {e}')
+            self.invalid_flag = True
+
+        return None
 
     def read_ir_data(self):
         try:
@@ -203,33 +270,33 @@ class Molecule:
             fit_length = self.IR_FIT_LENGTH
 
             min_index = 0
-            max_index = len(x)-1
+            max_index = len(x) - 1
             while x[min_index] < self.IR_LOWER_REQ:
-                min_index+=1
+                min_index += 1
             while x[max_index] > self.IR_UPPER_REQ:
-                max_index-=1
+                max_index -= 1
 
-            index_range = max_index-min_index
-            ratio = (fit_length-1)/index_range
+            index_range = max_index - min_index
+            ratio = (fit_length - 1) / index_range
 
-            new_x[fit_length-1] = x[max_index]
-            new_y[fit_length-1] = y[max_index-1]
+            new_x[fit_length - 1] = x[max_index]
+            new_y[fit_length - 1] = y[max_index - 1]
 
             index = 0
-            #interpolation
-            for k in range(fit_length-1):
-                if 0 <= k%ratio < 1:
+            # interpolation
+            for k in range(fit_length - 1):
+                if 0 <= k % ratio < 1:
                     new_x[k] = x[index]
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                    new_x[k] = (x[index] - x[index - 1]) * (k % ratio) / ratio \
                                + x[
-                        index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                                   index - 1]
+                    new_y[k] = (y[index] - y[index - 1]) * (k % ratio) / \
                                ratio + \
                                y[index - 1]
-            return np.concatenate([new_x,new_y])
+            return np.concatenate([new_x, new_y])
 
         except IRError as er:
             if self.debug: print(f"IR Data Incompatible: {er}")
@@ -261,34 +328,34 @@ class Molecule:
             fit_length = self.UV_FIT_LENGTH
 
             min_index = 0
-            max_index = len(x)-1
+            max_index = len(x) - 1
             while x[min_index] < self.UV_LOWER_REQ:
-                min_index+=1
+                min_index += 1
             while x[max_index] > self.UV_UPPER_REQ:
-                max_index-=1
+                max_index -= 1
 
-            index_range = max_index-min_index
-            ratio = (fit_length-1)/index_range
+            index_range = max_index - min_index
+            ratio = (fit_length - 1) / index_range
 
-            new_x[fit_length-1] = x[max_index]
-            new_y[fit_length-1] = y[max_index-1]
+            new_x[fit_length - 1] = x[max_index]
+            new_y[fit_length - 1] = y[max_index - 1]
 
             index = 0
-            #interpolation
-            for k in range(fit_length-1):
-                if 0 <= k%ratio < 1:
+            # interpolation
+            for k in range(fit_length - 1):
+                if 0 <= k % ratio < 1:
                     new_x[k] = x[index]
                     new_y[k] = y[index]
                     index += 1
                 else:
-                    new_x[k] = (x[index]-x[index-1])*(k%ratio)/ratio \
+                    new_x[k] = (x[index] - x[index - 1]) * (k % ratio) / ratio \
                                + x[
-                        index-1]
-                    new_y[k] = (y[index] - y[index - 1]) * (k%ratio) / \
+                                   index - 1]
+                    new_y[k] = (y[index] - y[index - 1]) * (k % ratio) / \
                                ratio + \
                                y[index - 1]
 
-            return np.concatenate([new_x,new_y])
+            return np.concatenate([new_x, new_y])
 
         except UVError as er:
             if self.debug: print(f"UV Data Incompatible: {er}")
@@ -299,20 +366,18 @@ class Molecule:
 
         return None
 
-
     def combine_data(self):
         """combine the data in order: starting index will be 1 or 0 depnding if it has nitrogen (handled in loading data)
         then cnmr_data.shape: 131072,
         then hnmr_data: 35693,
         then ms_data: 200) """
-        #self.monster_array = np.concatenate((self.cnmr_data,
+        # self.monster_array = np.concatenate((self.cnmr_data,
         # self.hnmr_data, self.ms_data))
         try:
-            self.monster_array = np.concatenate([self.cnmr_data,
+            self.monster_array = np.concatenate((self.cnmr_data,
                                                  self.hnmr_data,
-                                                 self.ms_data,
-                                                 self.ir_data,
-                                                 self.uv_data,])
+                                                 self.ms_data))
+            # self.monster_array = self.ms_data
             if self.debug: print("Success")
         except Exception as e:
             self.invalid_flag = True
@@ -321,17 +386,17 @@ class Molecule:
 
     def __str__(self):
         to_return = f"ID: {self.__hash__()} Valid:" \
-               f"{self.invalid_flag==False}"
+                    f"{self.invalid_flag == False}"
         if not self.invalid_flag:
             if type(self.ms_data) is type(np.zeros(1)):
                 to_return += f", MS: {self.ms_data.__len__()}"
             if type(self.ir_data) is type(np.zeros(1)):
                 to_return += f", IR: {self.ir_data.__len__()}"
-            if type(self.uv_data)  is type(np.zeros(1)):
+            if type(self.uv_data) is type(np.zeros(1)):
                 to_return += f", UV: {self.uv_data.__len__()}"
-            if type(self.hnmr_data)  is type(np.zeros(1)):
+            if type(self.hnmr_data) is type(np.zeros(1)):
                 to_return += f", HNMR: {self.hnmr_data.__len__()}"
-            if type(self.cnmr_data)  is type(np.zeros(1)):
+            if type(self.cnmr_data) is type(np.zeros(1)):
                 to_return += f", CNMR: {self.cnmr_data.__len__()}"
         return to_return
 
@@ -346,10 +411,18 @@ def load_data_both(debug=False):
     # create an empty list to hold the Molecule objects
     molecules = []
 
+    # counting for debugging
+    no_nitrogenic = 0
+    nitrogenic = 0
+
     # iterate over each molecule directory in the Nitrogenic and NoNitrogen directories
     for dir_name in ['Nitrogenic', 'NoNitrogen']:
         subdirectory = os.path.join(root_directory, dir_name)
         for molecule_dir in os.listdir(subdirectory):
+            # check if the current item is a directory
+            if not os.path.isdir(os.path.join(subdirectory, molecule_dir)):
+                continue
+
             # create a dictionary to hold the filenames for this molecule
             filetype_to_filenames = {}
 
@@ -378,22 +451,31 @@ def load_data_both(debug=False):
                 else:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename)
-                #print(molecule)
+                # print(molecule)
                 if not molecule.invalid_flag:
+                    # print(f'monster array shape (on load!) {molecule.monster_array.shape}')
                     if dir_name == 'Nitrogenic':
                         molecule.monster_array = np.insert(molecule.monster_array, 0, 1)  # 1 for Nitrogenic
+                        nitrogenic += 1
                     else:
                         molecule.monster_array = np.insert(molecule.monster_array, 0, 0)  # 0 for Not
+                        no_nitrogenic += 1
                     molecules.append(molecule)
+
             except Exception as e:
                 print(f"Error processing files in '"
                       f"{os.path.join(subdirectory, molecule_dir)}': {e}")
                 continue
+    print(f'Nitrogenic loaded: {nitrogenic}, '
+          f'Non Nitrogenic loaded: {no_nitrogenic}')
+
+    print(f"V. 202313ssZ")
 
     return molecules
+    # return molecules, nitrogenic, no_nitrogenic # for assert test
 
-def plot_together(molecule:Molecule):
 
+def plot_together(molecule: Molecule):
     plt.figure(figsize=(14, 4))
     f, ax = plt.subplots()
     ax.set_title('IR, UV, MS spectra')
@@ -411,7 +493,7 @@ def plot_together(molecule:Molecule):
     plt.ylabel("Transmitance")
     plt.subplot(133)
     r = molecule.read_ms_data()
-    plt.plot(range(0,molecule.MS_FIT_LENGTH), r,
+    plt.plot(range(0, molecule.MS_FIT_LENGTH), r,
              'g')
     plt.xlabel("Mass Number")
     plt.ylabel("Transmitance")
@@ -420,10 +502,11 @@ def plot_together(molecule:Molecule):
 
 
 if __name__ == "__main__":
+    # molecule_data, nitrogenic_count, no_nitrogenic_count = load_data_both(debug=False)
     molecule_data = load_data_both(debug=False)
 
-    mol = molecule_data[0]
-    plot_together(mol)
+    # mol = molecule_data[0]
+    # plot_together(mol)
 
     # MS TEST
     # x_values = np.arange(len(molecule_data[2].ms_data))  # ***REMOVE** This is for debugging
@@ -432,26 +515,23 @@ if __name__ == "__main__":
     #          use_line_collection=True)
     # plt.show()
 
-    # Get MonsteR ArrAY
-
-    print(f'Monster array size. First index is 0 or 1 for having '
-          f'nitrogenic group (1 is true) '
-          f'{np.shape(molecule_data[0].monster_array)}')
+    # Get MonsteR Array
+    print(f'Monster array size {molecule_data[0].monster_array.shape}. First index is 0 or 1 for having '
+          f'nitrogenic group (1 is true)')
     print(f"The molecules have data arrays of length: "
           f"{str(molecule_data[0])}")
-    #print(f"After that is CNMR data. Array size
-    # {molecule_data[0].cnmr_data.shape}")
-    #print(f"After that is HNMR data. Array size
-    # {molecule_data[0].hnmr_data.shape}")
-    #print(f"After that is MS data. Array size
-    # {molecule_data[0].ms_data.shape}")
-    #print(
-    #    f"After that is IR data. Array size"
-    #    f" {molecule_data[0].ir_data.shape}")
-    print(f'Folders loaded {len(molecule_data)}') # Loading 341/352
+    print(f'Folders loaded {len(molecule_data)}')  # Loading 341/352
 
+    # Debug more.
+    monster_arrays = [mol.monster_array for mol in molecule_data]
 
-    ##### AND THE FINISH #### didnt test this
+    # Check if all shapes are the same size
+    shapes = [arr.shape for arr in monster_arrays]
+    assert all(shape == shapes[0] for shape in shapes), "All monster_array shapes must be the same size"
+
+    # Just check if everything matches
+    # assert nitrogenic_count + no_nitrogenic_count == len(
+    #     molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
+
     monster_arrays = [mol.monster_array for mol in molecule_data]
     data_table = np.vstack(monster_arrays)
-
