@@ -47,6 +47,7 @@ save_spectrum_to_file = function(spec, filepath) {
 		
 		// Optimization: Skip points for 13C NMR because the spacing is a little excessive...
 		if ( spec.title == "Predicted 13C NMR Spectrum" ) {
+		   mapObj.index = Math.floor(mapObj.index / 3);
 			dPt = dPt * 3;
 			dHz = dHz * 3;
 			dPpm = dPpm * 3;
