@@ -8,7 +8,7 @@ import pickle
 from time import sleep
 
 PATH = ".."
-HEAVY_ATOM_CUTOFF = 10
+HEAVY_ATOM_CUTOFF = 30
 MUST_HAVE_NITROGEN = True
 
 def meets_criteria(molecule_name:str):
@@ -179,4 +179,4 @@ def run_spectra_and_save(start, end, load_from_file=False):
     f.close()
 
 if __name__ == "__main__":
-    run_spectra_and_save(50002,150000,False)
+    run_spectra_and_save(150001,300000,True)

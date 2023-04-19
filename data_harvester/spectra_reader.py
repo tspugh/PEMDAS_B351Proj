@@ -116,12 +116,12 @@ class Molecule:
         # Initialization
         if ms_filename is not None:
             self.ms_data = self.read_ms_data()
-        # if hnmr_filename is not None:
-        #     self.hnmr_data = self.read_csv_data('HNMR')
-        # if cnmr_filename is not None:
-        #     self.cnmr_data = self.read_csv_data("CNMR")
-        if ir_filename is not None:
-            self.ir_data = self.read_ir_data_zed()
+        if hnmr_filename is not None:
+            self.hnmr_data = self.read_csv_data('HNMR')
+        if cnmr_filename is not None:
+            self.cnmr_data = self.read_csv_data("CNMR")
+        # if ir_filename is not None:
+        #     self.ir_data = self.read_ir_data_zed()
         # if uv_filename is not None:
         #      self.uv_data = self.read_uv_data()
 
@@ -169,17 +169,37 @@ class Molecule:
             increment = 0.001907
             filename = self.cnmr_filename
 
-        data = pd.read_csv(filename, header=None)
-        y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
-        index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        """METHOD #1: Perhaps less accurate way, indices are not matching seemingly/offset but still produces okay
+        results. Use this method or below if you want to test. Produces F1 in the low .70's"""
+        # data = pd.read_csv(filename, header=None)
+        # y_values = data[2].values[::-1]  # Original CSV is backwards / column 3
+        # index_values = data[1].values[::-1]  # Cullen added the actual indexes / column 2
+        #
+        # # To calculate length of the Y array
+        # new_x_values = np.arange(start, stop, increment)
+        # new_y_values = np.zeros_like(new_x_values)
+        #
+        # for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        #     if 0 <= index < len(new_y_values):  # max length check
+        #         new_y_values[index] = y_values[i]  # slot it in there
 
-        # To calculate length of the Y array
+        """METHOD #2 This will produce a F1 score up to .89 if you switch the y_values to the 'MESSED UP DATA'
+        Not sure why, perhaps garbage results. The AI training time is also cut by 100%. But also, 
+        It may be the case that the correct line (currently uncommented) may produce better results
+        than up above, but only very very slightly. """
+        data = pd.read_csv(filename, header=None)
+        x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
+        y_values = data[2].values[::-1]  # Y values are in column 3 now.
+        # y_values = data[1].values[::-1]  # MESSED UP DATA BUT PRODUCES HIGHER F1
+
+        # Set start stop increments depending on HNMR or CNMR, and filename specs
         new_x_values = np.arange(start, stop, increment)
         new_y_values = np.zeros_like(new_x_values)
 
-        for i, index in enumerate(index_values):  # Iterate through the indexes from CSV
+        for i, x_val in enumerate(x_values):
+            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
             if 0 <= index < len(new_y_values):  # max length check
-                new_y_values[index] = y_values[i]  # slot it in there
+                new_y_values[index] = y_values[i]  # and slot it in there
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
@@ -354,12 +374,10 @@ class Molecule:
         # self.monster_array = np.concatenate((self.cnmr_data,
         # self.hnmr_data, self.ms_data))
         try:
-            # self.monster_array = np.concatenate([self.cnmr_data,
-            #                                      self.hnmr_data,
-            #                                      self.ms_data,
-            #                                      self.ir_data,
-            #                                      self.uv_data,])
-            self.monster_array = self.ir_data
+            self.monster_array = np.concatenate((self.cnmr_data,
+                                                 self.hnmr_data,
+                                                 self.ms_data))
+            # self.monster_array = self.ms_data
             if self.debug: print("Success")
         except Exception as e:
             self.invalid_flag = True
@@ -385,7 +403,7 @@ class Molecule:
 
 def load_data_both(debug=False):
     # When used on its own set the directory to .. otherwise leave it empty as we will use it as an import
-    root_directory = '../'
+    root_directory = ''
 
     # define the filenames to search for
     filenames_to_search = ['*_IR_*.jdx', '*_UV_*.jdx', '13C.csv', '1H.csv', '*_MS_*.jdx', 'classification_info.txt']
@@ -451,7 +469,10 @@ def load_data_both(debug=False):
     print(f'Nitrogenic loaded: {nitrogenic}, '
           f'Non Nitrogenic loaded: {no_nitrogenic}')
 
+    print(f"V. 202313ssZ")
+
     return molecules
+    # return molecules, nitrogenic, no_nitrogenic # for assert test
 
 
 def plot_together(molecule: Molecule):
@@ -481,6 +502,7 @@ def plot_together(molecule: Molecule):
 
 
 if __name__ == "__main__":
+    # molecule_data, nitrogenic_count, no_nitrogenic_count = load_data_both(debug=False)
     molecule_data = load_data_both(debug=False)
 
     # mol = molecule_data[0]
@@ -506,6 +528,10 @@ if __name__ == "__main__":
     # Check if all shapes are the same size
     shapes = [arr.shape for arr in monster_arrays]
     assert all(shape == shapes[0] for shape in shapes), "All monster_array shapes must be the same size"
+
+    # Just check if everything matches
+    # assert nitrogenic_count + no_nitrogenic_count == len(
+    #     molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
 
     monster_arrays = [mol.monster_array for mol in molecule_data]
     data_table = np.vstack(monster_arrays)
