@@ -25,7 +25,7 @@ save_spectrum_to_file = function(spec, filepath) {
 	if ( spec == undefined || !spec.isValid() ) { return; }
 	var file = new File(filepath);
 	var mapObj = {},
-	    aDecimals = 6, rounder,
+	    aDecimals = 7, rounder,
 	    aFormat = "{ppm},{index},{real}",
 	    hz, dHz, pt, dPt, endPt, ppm, dPpm, strm;	    
 	
@@ -45,7 +45,14 @@ save_spectrum_to_file = function(spec, filepath) {
 		// Decrement me and store me in the CSV.
 		mapObj.index = spec.count()-1;
 		
-		while ( pt !== endPt ) {		
+		// Optimization: Skip points for 13C NMR because the spacing is a little excessive...
+		if ( spec.title == "Predicted 13C NMR Spectrum" ) {
+			dPt = dPt * 3;
+			dHz = dHz * 3;
+			dPpm = dPpm * 3;
+		}
+		
+		while ( pt <= endPt ) {		
 			//mapObj.hz = hz.toFixed(aDecimals);
 			mapObj.ppm = ppm.toFixed(aDecimals);
 			//mapObj.pts = pt;
@@ -182,4 +189,4 @@ batch_prediction_smiles = function(filepath) {
 	print("Done!");
 };
 
-batch_prediction_smiles(Dir.home() + "/" + SMILES_FILE);
+//batch_prediction_smiles(Dir.home() + "/" + SMILES_FILE);
