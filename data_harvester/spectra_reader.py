@@ -112,21 +112,19 @@ class Molecule:
         self.cnmr_filename = cnmr_filename
         self.ir_filename = ir_filename
         self.uv_filename = uv_filename
-
-        # Initialization
-        if ms_filename is not None:
+        
+        if None in { ms_filename, hnmr_filename, cnmr_filename, ir_filename, uv_filename }:
+            if debug: print('Warning: Missing spectra.')
+            self.invalid_flag = True
+        else:
+            # Initialization
             self.ms_data = self.read_ms_data()
-        if hnmr_filename is not None:
             self.hnmr_data = self.read_csv_data('HNMR')
-        if cnmr_filename is not None:
             self.cnmr_data = self.read_csv_data("CNMR")
-        # if ir_filename is not None:
-        #     self.ir_data = self.read_ir_data_zed()
-        # if uv_filename is not None:
-        #      self.uv_data = self.read_uv_data()
+            self.ir_data = self.read_ir_data_zed()
+            #self.uv_data = self.read_uv_data()
 
-        # if class_filename is not None:
-        #     self.classification_data = self.read(class_filename)
+            #self.classification_data = self.read(class_filename)
 
         # THE ARRAY
         self.monster_array = self.combine_data()
@@ -159,14 +157,16 @@ class Molecule:
     def read_csv_data(self, data_type):
         """ Reads HNMR/CNMR data, fills in missing 0's between peaks and 0's before and after where data begins"""
         if data_type == 'HNMR':
-            start = -1.99272
-            stop = 10
-            increment = 0.000336
+            #start = -1.99272
+            #stop = 10
+            #increment = 0.000336
+            npoints = 32787
             filename = self.hnmr_filename
         else:
-            start = -19.9524
-            stop = 230
-            increment = 0.001907
+            #start = -19.9524
+            #stop = 230
+            #increment = 0.001907
+            npoints = 43691
             filename = self.cnmr_filename
 
         """METHOD #1: Perhaps less accurate way, indices are not matching seemingly/offset but still produces okay
@@ -188,18 +188,28 @@ class Molecule:
         It may be the case that the correct line (currently uncommented) may produce better results
         than up above, but only very very slightly. """
         data = pd.read_csv(filename, header=None)
-        x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
-        y_values = data[2].values[::-1]  # Y values are in column 3 now.
-        # y_values = data[1].values[::-1]  # MESSED UP DATA BUT PRODUCES HIGHER F1
+        # x_values = data[0].values[::-1]  # We need to reverse cuz it's backwards
+        # y_values = data[2].values[::-1]  # Y values are in column 3 now.
+        # # y_values = data[1].values[::-1]  # MESSED UP DATA BUT PRODUCES HIGHER F1
 
-        # Set start stop increments depending on HNMR or CNMR, and filename specs
-        new_x_values = np.arange(start, stop, increment)
-        new_y_values = np.zeros_like(new_x_values)
+        # # Set start stop increments depending on HNMR or CNMR, and filename specs
+        # new_x_values = np.arange(start, stop, increment)
+        # new_y_values = np.zeros_like(new_x_values)
 
-        for i, x_val in enumerate(x_values):
-            index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
-            if 0 <= index < len(new_y_values):  # max length check
-                new_y_values[index] = y_values[i]  # and slot it in there
+        # for i, x_val in enumerate(x_values):
+        #     index = int(round((x_val - start) / increment))  # get index that will be channeled into Y / other options are np.where(np.isclose) but I cant find good tolerances
+        #     if 0 <= index < len(new_y_values):  # max length check
+        #         new_y_values[index] = y_values[i]  # and slot it in there
+        
+        index_values = data[1].values[::-1]
+        y_values = data[2].values[::-1]
+        
+        new_y_values = np.zeros(npoints)
+        for i, index in enumerate(index_values):
+            if index < 0 or index >= len(new_y_values):
+                print(f'Warning: Ignoring index {index} for NMR {data_type} for {filename}.')
+                continue
+            new_y_values[index] = y_values[i]
 
         if self.debug: print(f'Successful CSV read. Shape: {new_y_values.shape}')
 
@@ -367,21 +377,16 @@ class Molecule:
         return None
 
     def combine_data(self):
-        """combine the data in order: starting index will be 1 or 0 depnding if it has nitrogen (handled in loading data)
-        then cnmr_data.shape: 131072,
-        then hnmr_data: 35693,
-        then ms_data: 200) """
-        # self.monster_array = np.concatenate((self.cnmr_data,
-        # self.hnmr_data, self.ms_data))
-        try:
-            self.monster_array = np.concatenate((self.cnmr_data,
-                                                 self.hnmr_data,
-                                                 self.ms_data))
-            # self.monster_array = self.ms_data
-            if self.debug: print("Success")
-        except Exception as e:
-            self.invalid_flag = True
-            self.monster_array = None
+        # Concatenate entries we have data for.
+        to_concat = []
+        for datatype in [ self.cnmr_data, self.hnmr_data, self.ms_data, self.ir_data, self.uv_data ]:
+            if datatype is not None:
+                to_concat.append(datatype)
+        if len(to_concat) > 0:
+            self.monster_array = np.concatenate(to_concat)
+        else:
+            self.monster_array = []
+        
         return self.monster_array
 
     def __str__(self):
@@ -444,7 +449,7 @@ def load_data_both(debug=False):
                 hnmr_filename = next(iter(filetype_to_filenames['1H.csv']), None)
                 ms_filename = next(iter(filetype_to_filenames['*_MS_*.jdx']), None)
                 class_filename = next(iter(filetype_to_filenames['classification_info.txt']), None)
-
+                
                 if debug:
                     molecule = Molecule(ir_filename, uv_filename, cnmr_filename, hnmr_filename, ms_filename,
                                         class_filename, debug=True)
@@ -533,5 +538,12 @@ if __name__ == "__main__":
     # assert nitrogenic_count + no_nitrogenic_count == len(
     #     molecule_data), "The sum of nitrogenic and no_nitrogenic counts does not match the length of molecule_data"
 
-    monster_arrays = [mol.monster_array for mol in molecule_data]
+    # monster_arrays = [mol.monster_array for mol in molecule_data]
+    
+    #for mol in molecule_data:
+    #mol = molecule_data[0]
+    #with open('testout.csv','w') as f:
+    #    for i, val in enumerate(mol.monster_array):
+    #        f.write(f'{i},{val}\n')
+    
     data_table = np.vstack(monster_arrays)
