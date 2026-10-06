@@ -35,6 +35,8 @@ test accuracy** on the notebook's 80/20 split (47 correct predictions out of a
 55-sample test set). The split does not set `random_state` explicitly, and the
 notebook also shuffles the samples beforehand, so this is a historical saved
 result rather than a claim that every new run will reproduce the same score.
+The later PyTorch cells prepare data loaders and define a network, loss, and
+optimizer, but do not contain a training loop or saved PyTorch result.
 
 ## Run in Google Colab
 
