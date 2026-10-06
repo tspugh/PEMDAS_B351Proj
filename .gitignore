@@ -152,6 +152,8 @@ cython_debug/
 #.idea/
 
 #additional
+.DS_Store
+**/.DS_Store
 spectra
 new_spectra_all
 old_spectra_unrefined

@@ -1,31 +1,64 @@
-# PEMDAS_B351Proj
- A project for Spring 2023 at IU Bloomington for B351 - Intro to Artificial Intelligence
+# Predicting Nitrogen from Molecular Spectra
 
-## Team Members
+This was a Spring 2023 project for Indiana University Bloomington's B351:
+Introduction to Artificial Intelligence. It explores whether a molecule
+contains nitrogen using combined IR, UV, mass-spectrometry, and NMR data.
+
+## Team
+
 - Praneeth Bhattiprolu
 - Trevor Buechler
 - Thomas Pugh
 - Cullen Sullivan
 - Zeshawn Zahid
 
-## Project Description
-Using spectra data and machine learning to predict whether a molecule contains nitrogen or not. Code in this repository includes code for data harvesting, NMR simulation, and machine learning models.
+## What is in the repository
 
-## File Structure
-- 'data_harvesting' - contains the code for the data harvesting
-- 'nmr_sim' - contains the code for the NMR simulation
-- 'spectra' - contains the NMR spectra data in a jdx format
-- 'iris.data' - contains the data for the iris dataset used for practicing machine learning while waiting on the NMR data
-- 'ml_libraries.py' - contains the code using third party libraries for machine learning
-- 'scratch_mlp.py' - contains the code for the scratch implementation of the MLP. This was scrapped in favor of the third party libraries
-- Spectra.ipynb - notebook that contains the code and results for the machine learning models
-- 'Nitrogenic.zip' - contains the NMR spectra data for molecules that contain nitrogen
-- 'NoNitrogenic.zip' - contains the NMR spectra data for molecules that do not contain nitrogen
-- test_ir_consistency.py - contains the code for testing the consistency of the IR spectra data
+- `Spectra.ipynb` contains the data-loading, preprocessing, model-training, and
+  saved output from the final experiments.
+- `data_harvester/` contains the spectra reader and collection utilities.
+- `Nitrogenic.zip` and `NoNitrogen.zip` contain the two labelled spectra sets
+  consumed by the notebook.
+- `nmr_sim/` contains the NMR simulation work.
+- `ml_libraries.py` contains earlier scikit-learn experiments.
+- `scratch_MLP.py` is the team's earlier from-scratch MLP implementation; the
+  final notebook uses library implementations instead.
+- `iris.data` was used for ML practice while the spectra data was being
+  assembled.
+- `test_ir_consistency.py` contains exploratory IR consistency checks.
 
-## How to Run
-- Data harvesting code does not need to be run as the data is already in the repository in the zip files
-- NMR simulation code does not need to be run as the data is already in the repository in the zip files
-- To run, upload the Spectra.ipynb file to Google Colab
-- In Google Colab, upload data_harvesting/spectra_reader.py, Nitrogenic.zip, and NoNitrogenic.zip
-- You can then run all the cells in the notebook
+## Historical notebook result
+
+The committed notebook records 272 usable molecule samples after loading the
+archives. Its 100-neuron scikit-learn `MLPClassifier` output reports **85.45%
+test accuracy** on the notebook's 80/20 split (47 correct predictions out of a
+55-sample test set). The split does not set `random_state` explicitly, and the
+notebook also shuffles the samples beforehand, so this is a historical saved
+result rather than a claim that every new run will reproduce the same score.
+
+## Run in Google Colab
+
+Open `Spectra.ipynb` in Colab. Before running its existing cells, add and run a
+setup cell that checks out the package code and places the two archives where
+the notebook expects them:
+
+```python
+!git clone https://github.com/tspugh/PEMDAS_B351Proj.git /content/PEMDAS_B351Proj
+!cp /content/PEMDAS_B351Proj/Nitrogenic.zip /content/Nitrogenic.zip
+!cp /content/PEMDAS_B351Proj/NoNitrogen.zip /content/NoNitrogen.zip
+!pip install jcamp
+
+import sys
+sys.path.insert(0, "/content/PEMDAS_B351Proj")
+```
+
+Then run the notebook cells in order. The archive cells extract `Nitrogenic/`
+and `NoNitrogen/` under `/content`, and the import
+`from data_harvester import spectra_reader` resolves from the cloned
+repository. Colab already supplies the other libraries used by the notebook,
+including NumPy, pandas, SciPy, scikit-learn, Matplotlib, and PyTorch.
+
+The notebook contains saved output from the original coursework run, including
+large intermediate arrays and model metrics. Re-running the training cells can
+take time and may produce different metrics because the train/test split is not
+fixed with an explicit seed.
